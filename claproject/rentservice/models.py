@@ -34,7 +34,7 @@ class Item(models.Model):
     """
     Steps:
         1. User Request: in_stock
-        2. Librarian Approves + User Receives Item: in_circulation // May seperate these steps later on
+        2. Librarian Approves + User Receives Item: in_circulation // May separate these steps later on
         3. User Returns: inspection
             3-1. Librarian Process return: in_stock
             3-2. Item Needs Repair: being_repaired
