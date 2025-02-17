@@ -31,16 +31,16 @@ class DjangoAdministrator(models.Model):
 class Item(models.Model):
     title = models.CharField(max_length=255)
     identifier = models.CharField(max_length=255, unique=True)  # Can store ISBN, QR codes, barcodes
+    """
+    Steps:
+        1. User Request: in_stock
+        2. Librarian Approves + User Receives Item: in_circulation // May seperate these steps later on
+        3. User Returns: inspection
+            3-1. Librarian Process return: in_stock
+            3-2. Item Needs Repair: being_repaired
+                3-2-2 Item is Restored: in_stock
+    """
     STATUS_CHOICES = [
-        """
-        Steps:
-            1. User Request: in_stock
-            2. Librarian Approves + User Receives Item: in_circulation // May seperate these steps later on
-            3. User Returns: inspection
-                3-1. Librarian Process return: in_stock
-                3-2. Item Needs Repair: being_repaired
-                    3-2-2 Item is Restored: in_stock
-        """
         ('available', 'Is Available'),
         ('inspection', 'Being Inspected'),
         ('in_circulation', 'In Circulation'),
