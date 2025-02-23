@@ -14,7 +14,6 @@ from django.contrib.auth.models import User, Group
 @csrf_exempt
 def sign_in(request):
     """Render the login page or redirect authenticated users to the correct dashboard."""
-    print(request.user.groups.all())  # Check which groups the user belongs to
     if request.user.is_authenticated:
         if request.user.groups.filter(name="Librarians").exists():
             return redirect('librarian_dashboard')
