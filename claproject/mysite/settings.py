@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import sys
 from pathlib import Path
 import os
+
+import dj_database_url
 from dotenv import load_dotenv
 from decouple import config
 
@@ -109,6 +111,12 @@ else:
             'PORT': config('DB_PORT', default='5432'),
         }
 }
+
+if 'DATABASE_URL' in os.environ:
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,  # optional: keep DB connections open for performance
+        default=DATABASES['default']
+    )
 
 
 # Password validation
