@@ -58,8 +58,20 @@ def auth_receiver(request):
     # Get or create user
     user, created = User.objects.get_or_create(username=email, defaults={"email": email, "first_name": name})
 
+    # more debugging
+    try:
+        # Check if the user exists or create a new one
+        user = User.objects.get(email=user_data['email'])
+    except User.DoesNotExist:
+        user = User.objects.create(
+            email=user_data['email'],
+            name=user_data['name'],
+            picture=user_data['picture']
+        )
+    # Log the user object for further debugging
+    print(f"User created/exists: {user}")
+
     if created:
-        # Assign the user to the "Patron" group by default
         patron_group, _ = Group.objects.get_or_create(name="Patron")
         user.groups.add(patron_group)
 
