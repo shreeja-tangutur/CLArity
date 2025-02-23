@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from decouple import config
 
 load_dotenv()
 
@@ -33,10 +34,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-a89id^=y=yioxf86bkn**lhu=zh+4ohoa!p7c&dl(fwgpu9bea'
+SECRET_KEY = config('SECRET_KEY', default='unsafe-default-key')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com', 'swe-b26-cla-app-2f731f490027.herokuapp.com']
 
@@ -99,14 +99,16 @@ if 'test' in sys.argv:
 		}
 	}
 else:
-	DATABASES = {
-		'default': {
-			'ENGINE': 'django.db.backends.postgresql',
-			'NAME': 'claproject',
-			"OPTIONS": {"service": "my_service",},
-		}
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='claproject'),
+            'USER': config('DB_USER', default='b26_user'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
 }
-
 
 
 # Password validation
