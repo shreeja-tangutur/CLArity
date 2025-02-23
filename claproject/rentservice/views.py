@@ -11,6 +11,8 @@ from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
 
+import logging
+
 @csrf_exempt
 def sign_in(request):
     if request.user.is_authenticated:
@@ -24,6 +26,7 @@ def sign_in(request):
 
 @csrf_exempt
 def auth_receiver(request):
+    
     token = request.POST.get('credential')
     if not token:
         return HttpResponse("No token provided", status=400)
@@ -51,16 +54,13 @@ def auth_receiver(request):
 
 
 def sign_out(request):
-    """Log out the user and redirect to login page."""
     logout(request)
     return redirect('sign_in')
 
 
 def librarian_dashboard(request):
-    """Librarian dashboard."""
     return render(request, "librarian_dashboard.html")
 
 
 def patron_dashboard(request):
-    """Patron dashboard."""
     return render(request, "patron_dashboard.html")
