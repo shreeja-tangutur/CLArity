@@ -11,9 +11,10 @@ from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
 
+import logging
+
 @csrf_exempt
 def sign_in(request):
-    """Render the login page or redirect authenticated users to the correct dashboard."""
     if request.user.is_authenticated:
         if request.user.groups.filter(name="Librarians").exists():
             return redirect('librarian_dashboard')
@@ -25,8 +26,20 @@ def sign_in(request):
 
 @csrf_exempt
 def auth_receiver(request):
-    """Handles Google login and assigns users to groups if needed."""
     print("Inside auth_receiver")
+
+    #debugging
+    try:
+        token = request.POST['credential']
+        print(f"Token: {token}")
+        user_data = id_token.verify_oauth2_token(
+            token, requests.Request(), os.environ['GOOGLE_OAUTH_CLIENT_ID']
+        )
+        print(f"User data: {user_data}")
+    except Exception as e:
+        print(f"Error: {e}")
+        logging.error(f"Error verifying token: {e}")  # Logs error to Heroku logs
+        return HttpResponse(status=500)
     
     token = request.POST.get('credential')
     if not token:
@@ -56,16 +69,13 @@ def auth_receiver(request):
 
 
 def sign_out(request):
-    """Log out the user and redirect to login page."""
     logout(request)
     return redirect('sign_in')
 
 
 def librarian_dashboard(request):
-    """Librarian dashboard."""
     return render(request, "librarian_dashboard.html")
 
 
 def patron_dashboard(request):
-    """Patron dashboard."""
     return render(request, "patron_dashboard.html")
