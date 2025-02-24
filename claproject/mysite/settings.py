@@ -38,6 +38,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='unsafe-default-key')
 
+# set to true for testing locally
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com', 'swe-b26-cla-app-2f731f490027.herokuapp.com']
@@ -117,6 +118,13 @@ if 'DATABASE_URL' in os.environ:
         conn_max_age=600,  # optional: keep DB connections open for performance
         default=DATABASES['default']
     )
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 
 
 # Password validation
