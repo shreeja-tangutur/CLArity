@@ -16,7 +16,7 @@ import logging
 @csrf_exempt
 def sign_in(request):
     if request.user.is_authenticated:
-        if request.user.groups.filter(name="Librarians").exists():
+        if request.user.groups.filter(name="Librarian").exists():
             return redirect('librarian_dashboard')
         else:
             return redirect('patron_dashboard')
