@@ -64,3 +64,12 @@ def librarian_dashboard(request):
 
 def patron_dashboard(request):
     return render(request, "patron_dashboard.html")
+
+def textbooks(request):
+    return render(request, 'collections/textbooks.html')
+
+def calculators(request):
+    return render(request, 'collections/calculators.html')
+
+def chargers(request):
+    return render(request, 'collections/chargers.html')
