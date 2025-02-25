@@ -7,4 +7,7 @@ urlpatterns = [
     path('auth-receiver', views.auth_receiver, name='auth_receiver'),
     path('librarian-dashboard/', views.librarian_dashboard, name='librarian_dashboard'),
     path('patron-dashboard/', views.patron_dashboard, name='patron_dashboard'),
+    path('textbooks/', views.textbooks, name= 'textbooks'), 
+    path('calculators/', views.calculators, name = 'calculators'),
+    path('chargers/', views.chargers, name = 'chargers'),
 ]
