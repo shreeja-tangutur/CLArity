@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'claproject.rentservice.apps.RentserviceConfig',
 ]
 
 MIDDLEWARE = [
@@ -182,3 +183,5 @@ try:
         django_heroku.settings(locals())
 except ImportError:
     found = False
+
+AUTH_USER_MODEL = 'rentservice.User'

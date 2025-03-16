@@ -10,6 +10,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
+from .models import Profile
 
 import logging
 
@@ -73,3 +74,16 @@ def calculators(request):
 
 def chargers(request):
     return render(request, 'collections/chargers.html')
+
+def patron_dashboard_view(request):
+    profile = Profile.objects.get(user=request.user)
+
+    if request.method == 'POST' and request.FILES.get('profile_picture'):
+        profile_picture = request.FILES['profile_picture']
+        
+        profile.profile_picture = profile_picture
+        profile.save()
+
+        return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
+
+    return render(request, 'patron_dashboard.html', {'profile': profile})

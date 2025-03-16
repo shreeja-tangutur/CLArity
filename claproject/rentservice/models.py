@@ -85,7 +85,7 @@ class Comment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class Rating(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comments")
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="ratings")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     value = models.FloatField(default=0.0, validators=[MinValueValidator(1), MaxValueValidator(5)])
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -154,4 +154,9 @@ class BorrowRequest(models.Model):
             self.item.status = 'being_inspected'
             self.item.save()
             self.save()
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+
 
