@@ -21,4 +21,4 @@ jobs:
         pip install pylint pylint-django
     - name: Analysing the code with pylint
       run: |
-        pylin claproject/
+        pylint claproject/
