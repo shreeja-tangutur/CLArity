@@ -10,8 +10,9 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User, Group
-from .models import Profile
+from .models import Profile, Item
 
+import os
 import logging
 
 @csrf_exempt
@@ -74,6 +75,18 @@ def calculators(request):
 
 def chargers(request):
     return render(request, 'collections/chargers.html')
+
+@csrf_exempt
+def search_items(request):
+    query = request.GET.get('q', '')  
+    results = []
+
+    if query:
+        results = Item.objects.filter(title__icontains=query)
+    return render(request, 'search_results.html', {
+        'query': query,
+        'results': results
+    })
 
 def patron_dashboard_view(request):
     profile = Profile.objects.get(user=request.user)
