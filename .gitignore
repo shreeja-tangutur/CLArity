@@ -2,3 +2,6 @@
 staticfiles/
 db.sqlite3
 .env
+venv/ # Ignore virtual environments regardless of their naming convention
+env/
+.venv/ # For hidden venv
