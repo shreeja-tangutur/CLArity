@@ -9,7 +9,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator, RegexVa
 from typing import List
 
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -20,6 +20,9 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patron')
     google_account = models.EmailField(unique=True)  # Have to implement Google API
     joined_date = models.DateTimeField(auto_now_add=True)
+
+    groups = models.ManyToManyField(Group, related_name="rentservice_user_set", blank=True)
+    user_permissions = models.ManyToManyField(Permission, related_name="rentservice_user_permissions_set", blank=True)
 
     def is_librarian(self):
         return self.role == 'librarian'
@@ -85,7 +88,7 @@ class Comment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class Rating(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comments")
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="ratings")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     value = models.FloatField(default=0.0, validators=[MinValueValidator(1), MaxValueValidator(5)])
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -155,3 +158,6 @@ class BorrowRequest(models.Model):
             self.item.save()
             self.save()
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)

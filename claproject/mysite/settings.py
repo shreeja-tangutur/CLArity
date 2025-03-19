@@ -52,14 +52,13 @@ ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com', 's
 # Application definition
 
 INSTALLED_APPS = [
-    'claproject.mysite',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'claproject.rentservice',
     'storages',
 ]
 
@@ -212,3 +211,5 @@ MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 
 #     MEDIA_URL = "/media/"
 #     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+AUTH_USER_MODEL = 'rentservice.User'
