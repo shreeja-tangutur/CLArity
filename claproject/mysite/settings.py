@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'claproject.rentservice',
+    'claproject.rentservice.apps.RentserviceConfig',
     'storages',
 ]
 
@@ -189,6 +189,7 @@ try:
 except ImportError:
     found = False
 
+AUTH_USER_MODEL = 'rentservice.User'
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_URL = "/static/"
 # USE_S3 = os.getenv("USE_S3", "FALSE").strip().upper() == "TRUE"

@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 import os
+import logging
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -11,8 +12,10 @@ from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
 from .models import Profile, User
+from .models import Profile, Item
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 
-import logging
 
 @csrf_exempt
 def sign_in(request):
@@ -94,3 +97,90 @@ def patron_dashboard_view(request):
             print("❌ No file received in request.FILES!")
 
     return render(request, 'patron_dashboard.html', {'profile': profile})
+
+
+@csrf_exempt
+def search_items(request):
+    query = request.GET.get('q', '')  
+    results = []
+
+    if query:
+        results = Item.objects.filter(title__icontains=query)
+    return render(request, 'search_results.html', {
+        'query': query,
+        'results': results
+    })
+
+def patron_dashboard_view(request):
+    profile = Profile.objects.get(user=request.user)
+
+    if request.method == 'POST' and request.FILES.get('profile_picture'):
+        profile_picture = request.FILES['profile_picture']
+        
+        profile.profile_picture = profile_picture
+        profile.save()
+
+        return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
+
+    return render(request, 'patron_dashboard.html', {'profile': profile})
+
+@login_required
+def add_to_cart(request, item_id):
+    """
+    Adds the specified Item to the user's session-based cart.
+    """
+    item = get_object_or_404(Item, id=item_id)
+
+    # Get current cart from session; if none, create empty list
+    cart = request.session.get('cart', [])
+
+    # Convert IDs to strings if you prefer
+    # If you only want to store unique items, check first
+    if item_id not in cart:
+        cart.append(item_id)
+
+    request.session['cart'] = cart
+    return redirect('cart')  # or wherever you want to go after adding
+
+
+@login_required
+def remove_from_cart(request, item_id):
+    """
+    Removes the specified Item from the user's session-based cart.
+    """
+    cart = request.session.get('cart', [])
+    if item_id in cart:
+        cart.remove(item_id)
+        request.session['cart'] = cart
+    return redirect('cart')
+
+
+@login_required
+def view_cart(request):
+    """
+    Displays the items currently in the session-based cart.
+    """
+    cart = request.session.get('cart', [])
+    # Retrieve actual Item objects from the IDs
+    items = Item.objects.filter(id__in=cart)
+
+    return render(request, 'cart.html', {'items': items})
+
+
+@login_required
+def checkout(request):
+    """
+    Example checkout view that clears the cart.
+    Later, you can create BorrowRequests or other records here.
+    """
+    cart = request.session.get('cart', [])
+    items = Item.objects.filter(id__in=cart)
+
+    # Example: create BorrowRequests, or do other logic
+    # for item in items:
+    #     BorrowRequest.objects.create(user=request.user, item=item, status='pending')
+
+    # Clear the cart after processing
+    request.session['cart'] = []
+
+    return render(request, 'checkout.html', {'items': items})
