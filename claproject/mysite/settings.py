@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'claproject.rentservice.apps.RentserviceConfig',
-    'claproject.rentservice',
     'storages',
 ]
 
