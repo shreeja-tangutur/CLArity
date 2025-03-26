@@ -10,7 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.contrib.auth import login, logout
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
+from .models import Profile, User
 from .models import Profile, Item
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -76,6 +77,27 @@ def calculators(request):
 
 def chargers(request):
     return render(request, 'collections/chargers.html')
+
+def patron_dashboard_view(request):
+    profile = Profile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        print("📢 Form submitted!")  # Debugging print
+
+        if 'profile_picture' in request.FILES:
+            profile_picture = request.FILES['profile_picture']
+            print(f"📢 Received file: {profile_picture.name}")  # Debugging print
+
+            profile.profile_picture = profile_picture
+            profile.save()
+
+            print("✅ Profile picture updated!")
+            return redirect('patron_dashboard')
+        else:
+            print("❌ No file received in request.FILES!")
+
+    return render(request, 'patron_dashboard.html', {'profile': profile})
+
 
 @csrf_exempt
 def search_items(request):

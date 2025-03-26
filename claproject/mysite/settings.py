@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import sys
 from pathlib import Path
 import os
+import environ
 
 import dj_database_url
 from dotenv import load_dotenv
 from decouple import config
+
 
 load_dotenv()
 
@@ -30,6 +32,9 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -47,7 +52,6 @@ ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com', 's
 # Application definition
 
 INSTALLED_APPS = [
-    'claproject.mysite',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +59,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'claproject.rentservice.apps.RentserviceConfig',
+    'claproject.rentservice',
+    'storages',
 ]
+
+if 'storages' not in INSTALLED_APPS:
+    INSTALLED_APPS.append('storages')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -163,10 +172,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-
-print("STATIC_ROOT:", os.path.abspath(STATIC_ROOT))
 
 
 # Default primary key field type
@@ -183,5 +189,29 @@ try:
         django_heroku.settings(locals())
 except ImportError:
     found = False
+
+AUTH_USER_MODEL = 'rentservice.User'
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_URL = "/static/"
+# USE_S3 = os.getenv("USE_S3", "FALSE").strip().upper() == "TRUE"
+
+# if USE_S3:
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
+
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+# STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+# else:
+#     STATIC_URL = "/static/"
+
+
+#     MEDIA_URL = "/media/"
+#     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 AUTH_USER_MODEL = 'rentservice.User'

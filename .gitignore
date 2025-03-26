@@ -1,7 +1,21 @@
-.venv
-staticfiles/
-db.sqlite3
-.env
-venv/ # Ignore virtual environments regardless of their naming convention
+# Virtual environment  
+.venv/  
+venv/  
+
+# Python cache files  
+__pycache__/  
+*.py[cod]  
+*.pyo  
+
+# Django-related files  
+db.sqlite3  
+*.log  
+
+# Environment variables  
+.env  
+*.env
 env/
-.venv/ # For hidden venv
+
+# Static and media files  
+staticfiles/  
+media/  
