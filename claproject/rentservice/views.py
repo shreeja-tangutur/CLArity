@@ -1,8 +1,10 @@
 import os
 import logging
 import slugify
+import openpyxl
 
 from django.http import HttpResponse
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -70,6 +72,11 @@ def librarian_dashboard(request):
 
 def patron_dashboard(request):
     return render(request, "patron_dashboard.html")
+
+def items_list(request):
+    items = Item.objects.filter(deleted=False)
+    return render(request, 'items_list.html', {'items': items})
+
 
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
@@ -219,3 +226,74 @@ def checkout(request):
     return render(request, 'checkout.html', {'items': items})
 
 
+import xml.etree.ElementTree as ET
+from django.shortcuts import render, redirect
+from django.contrib import messages  # for feedback
+from .models import Item
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+def upload_xlsx(request):
+    if request.method == 'POST' and request.FILES.get('xlsx_file'):
+        xlsx_file = request.FILES['xlsx_file']
+        try:
+            wb = openpyxl.load_workbook(xlsx_file)
+            ws = wb.active
+        except Exception as e:
+            messages.error(request, f"Error reading XLSX file: {e}")
+            return render(request, 'upload_xlsx.html')
+
+        # Assume first row contains headers matching your Item model field names
+        headers = []
+        for cell in next(ws.iter_rows(min_row=1, max_row=1)):
+            headers.append(str(cell.value).strip() if cell.value else "")
+
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            data = dict(zip(headers, row))
+            identifier = data.get("identifier")
+            title = data.get("title", "")
+            description = data.get("description", "")
+            location = data.get("location", "")
+            status = data.get("status", "available")
+            try:
+                rating = float(data.get("rating", 0))
+            except (TypeError, ValueError):
+                rating = 0.0
+            try:
+                borrow_period_days = int(data.get("borrow_period_days", 30))
+            except (TypeError, ValueError):
+                borrow_period_days = 30
+
+            if identifier:
+                try:
+                    # Use get_or_create to avoid duplicate identifiers (which are unique)
+                    item, created = Item.objects.get_or_create(
+                        identifier=identifier,
+                        defaults={
+                            'title': title,
+                            'description': description,
+                            'location': location,
+                            'status': status if status in dict(Item.STATUS_CHOICES) else 'available',
+                            'rating': rating,
+                            'borrow_period_days': borrow_period_days,
+                        }
+                    )
+                    if not created:
+                        # Optionally update existing item
+                        item.title = title
+                        item.description = description
+                        item.location = location
+                        if status in dict(Item.STATUS_CHOICES):
+                            item.status = status
+                        item.rating = rating
+                        item.borrow_period_days = borrow_period_days
+                        item.save()
+                except Exception as e:
+                    messages.error(request, f"Error processing item with identifier {identifier}: {e}")
+                    continue
+            else:
+                messages.error(request, "Identifier missing for a row; skipping it.")
+
+        messages.success(request, "XLSX data uploaded successfully!")
+        return redirect('items_list')
+    return render(request, 'upload.html')
