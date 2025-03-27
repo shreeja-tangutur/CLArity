@@ -3,6 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 import os
 import logging
+import slugify
 
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -83,14 +84,23 @@ def librarian_dashboard(request):
 def patron_dashboard(request):
     return render(request, "patron_dashboard.html")
 
-def textbooks(request):
-    return render(request, 'collections/textbooks.html')
+def collection_detail(request, collection_slug):
+    collection = get_object_or_404(Collection, slug=collection_slug)
+    items = Item.objects.filter(collections=collection)
 
-def calculators(request):
-    return render(request, 'collections/calculators.html')
+    return render(request, 'collections/collection_detail.html', {
+        'collection': collection,
+        'items': items,
+    })
 
-def chargers(request):
-    return render(request, 'collections/chargers.html')
+# def textbooks(request):
+#     return render(request, 'collections/textbooks.html')
+#
+# def calculators(request):
+#     return render(request, 'collections/calculators.html')
+#
+# def chargers(request):
+#     return render(request, 'collections/chargers.html')
 
 def patron_dashboard_view(request):
     profile = Profile.objects.get(user=request.user)
@@ -112,6 +122,13 @@ def patron_dashboard_view(request):
 
     return render(request, 'patron_dashboard.html', {'profile': profile})
 
+def process_search(request):
+    if request.method == 'POST':
+        query = request.POST.get('q', '').strip()
+        if query:
+            search_slug = slugify(query)
+            return redirect('search_items', search_slug=search_slug)
+    return redirect('patron_dashboard')
 
 @csrf_exempt
 def search_items(request):
@@ -198,3 +215,5 @@ def checkout(request):
     request.session['cart'] = []
 
     return render(request, 'checkout.html', {'items': items})
+
+
