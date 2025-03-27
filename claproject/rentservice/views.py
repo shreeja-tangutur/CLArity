@@ -93,17 +93,17 @@ def collection_detail(request, collection_slug):
         'textbooks': {
             'title': 'Textbooks',
             'description': 'Browse through a wide range of textbooks available for rent, covering all subjects and majors.',
-            'image': 'https://via.placeholder.com/400x250?text=Textbooks',
+            'image': 'images/textbook.jpg',
         },
         'calculators': {
             'title': 'Calculators',
             'description': 'Need a calculator for your exams or projects? Check out our collection of scientific and graphing calculators.',
-            'image': 'https://via.placeholder.com/400x250?text=Calculators',
+            'image': 'images/calculator.jpg',
         },
         'chargers': {
             'title': 'Chargers',
             'description': 'Find any charger from phone chargers to laptop chargers.',
-            'image': 'https://via.placeholder.com/400x250?text=Chargers',
+            'image': 'images/charger.jpg',
         },
     }
 

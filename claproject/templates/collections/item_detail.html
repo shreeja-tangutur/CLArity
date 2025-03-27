@@ -1,10 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8">
+  <title>{{ item.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS CDN -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+      .product-image {
+          max-width: 100%;
+          height: auto;
+          border: 1px solid #e1e1e1;
+          padding: 5px;
+          background: #fff;
+      }
+      .rating {
+          color: #f0c14b;
+          font-size: 1.2rem;
+      }
+      .product-detail {
+          padding: 20px;
+          border: 1px solid #e1e1e1;
+          background: #fff;
+      }
+      .borrow-btn {
+          background-color: #FFA41C;
+          border: none;
+          color: #fff;
+          padding: 10px 20px;
+          font-size: 1rem;
+          border-radius: 3px;
+      }
+      .borrow-btn:hover {
+          background-color: #e69500;
+      }
+  </style>
 </head>
 <body>
+  <div class="container mt-5">
+    <div class="row">
+      <!-- Product Image Section -->
+      <div class="col-md-5">
+        {% if item.image %}
+          <img src="{{ item.image.url }}" alt="{{ item.title }}" class="product-image img-fluid">
+        {% else %}
+          <img src="https://via.placeholder.com/400" alt="No Image" class="product-image img-fluid">
+        {% endif %}
+      </div>
 
+      <!-- Product Details Section -->
+      <div class="col-md-7">
+        <div class="product-detail">
+          <h2>{{ item.title }}</h2>
+
+          <!-- Rating Display -->
+          <div class="mb-3">
+            <span class="rating">
+              {% comment %}
+                Loop through "12345" to display 5 stars total.
+                Compare the forloop.counter to the integer-rounded rating.
+              {% endcomment %}
+              {% for i in "12345" %}
+                {% if forloop.counter <= item.rating|floatformat:0 %}
+                  &#9733;  {# Filled star #}
+                {% else %}
+                  &#9734;  {# Empty star #}
+                {% endif %}
+              {% endfor %}
+            </span>
+            <small class="ml-2">{{ item.rating }} out of 5</small>
+          </div>
+
+          <!-- Other details -->
+          <p>{{ item.description }}</p>
+          <p><strong>Status:</strong> {{ item.get_status_display }}</p>
+          <p><strong>Condition:</strong> {{ item.condition }} / 10</p>
+          <p><strong>Location:</strong> {{ item.location }}</p>
+          <p><strong>Borrow Period:</strong> {{ item.borrow_period_days }} days</p>
+
+          <!-- Example Action Button -->
+          <button class="borrow-btn">Borrow Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
