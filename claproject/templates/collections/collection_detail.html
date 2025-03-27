@@ -48,7 +48,11 @@
         {% endif %}
 
         <div class="text-center mt-4">
-            <a href="{% url 'anonymous_home' %}" class="btn btn-secondary">Back to Home</a>
+            {% if request.user.is_authenticated and request.user.is_librarian %}
+                <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+            {% else %}
+                <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+            {% endif %}
         </div>
     </div>
 </body>
