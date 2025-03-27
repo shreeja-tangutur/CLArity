@@ -15,5 +15,17 @@ urlpatterns = [
     path('cart/add/<int:item_id>/', views.add_to_cart, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('checkout/', views.checkout, name='checkout'),
-    path('browse/', views.anonymous_home, name='anonymous_home')
+    path('browse/', views.anonymous_home, name='anonymous_home'),
+
+
+    # Collection & Search
+    path('collection/<slug:collection_slug>/', views.collection_detail, name='collection_detail'),
+    path('search/<slug:search_slug>/', views.search_results, name='search_results'),
+
+    # Item Detail
+    path('item/<str:identifier>/', views.item_detail, name='item_detail'),
+
+    # Process the search form
+    path('process-search/', views.process_search, name='process_search'),
+
 ]
