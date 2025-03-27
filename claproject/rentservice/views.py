@@ -84,6 +84,10 @@ def librarian_dashboard(request):
 def patron_dashboard(request):
     return render(request, "patron_dashboard.html")
 
+def item_detail(request, identifier):
+    item = get_object_or_404(Item, identifier=identifier)
+    return render(request, "collections/item_detail.html", {"item": item})
+
 def collection_detail(request, collection_slug):
     collection = get_object_or_404(Collection, slug=collection_slug)
     items = Item.objects.filter(collections=collection)
@@ -121,14 +125,6 @@ def patron_dashboard_view(request):
             print("❌ No file received in request.FILES!")
 
     return render(request, 'patron_dashboard.html', {'profile': profile})
-
-def process_search(request):
-    if request.method == 'POST':
-        query = request.POST.get('q', '').strip()
-        if query:
-            search_slug = slugify(query)
-            return redirect('search_items', search_slug=search_slug)
-    return redirect('patron_dashboard')
 
 @csrf_exempt
 def search_items(request):

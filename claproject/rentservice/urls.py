@@ -18,14 +18,8 @@ urlpatterns = [
     path('browse/', views.anonymous_home, name='anonymous_home'),
 
 
-    # Collection & Search
     path('collection/<slug:collection_slug>/', views.collection_detail, name='collection_detail'),
-    path('search/<slug:search_slug>/', views.process_search, name='search_results'),
-
-    # Item Detail
+    path('search/<slug:search_slug>/', views.search_items, name='search_results'),
     path('item/<str:identifier>/', views.item_detail, name='item_detail'),
-
-    # Process the search form
-    path('process-search/', views.process_search, name='process_search'),
 
 ]
