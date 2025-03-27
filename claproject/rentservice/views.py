@@ -1,26 +1,18 @@
-from django.shortcuts import render
-
-# Create your views here.
 import os
 import logging
 import slugify
 
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
-from .models import Profile, User
-from .models import Profile, Item
+from .models import Profile, User, Item
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
-
 from .models import Item, Collection
-from django.db.models import Q 
-
 
 @csrf_exempt
 def sign_in(request):
@@ -32,14 +24,11 @@ def sign_in(request):
     
     return render(request, 'sign_in.html')
 
-
 @csrf_exempt
 def auth_receiver(request):
-    
     token = request.POST.get('credential')
     if not token:
         return HttpResponse("No token provided", status=400)
-
     try:
         user_data = id_token.verify_oauth2_token(
             token, requests.Request(), os.environ['GOOGLE_OAUTH_CLIENT_ID']
@@ -51,7 +40,6 @@ def auth_receiver(request):
     name = user_data.get("name")
 
     user, created = User.objects.get_or_create(username=email, defaults={"email": email, "first_name": name})
-
     # user is patron by default
     if created:
         patron_group, _ = Group.objects.get_or_create(name="Patron")
@@ -75,7 +63,6 @@ def anonymous_home(request):
 def sign_out(request):
     logout(request)
     return redirect('sign_in')
-
 
 def librarian_dashboard(request):
     return render(request, "librarian_dashboard.html")
@@ -115,7 +102,6 @@ def collection_detail(request, collection_slug):
         'collection': collection,
         'slug': collection_slug
     })
-
 
 # def textbooks(request):
 #     return render(request, 'collections/textbooks.html')
