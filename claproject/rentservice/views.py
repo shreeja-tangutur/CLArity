@@ -111,7 +111,7 @@ def collection_detail(request, collection_slug):
     if not collection:
         return render(request, '404.html', status=404)
 
-    return render(request, 'collection_detail.html', {
+    return render(request, 'collections/collection_detail.html', {
         'collection': collection,
         'slug': collection_slug
     })
