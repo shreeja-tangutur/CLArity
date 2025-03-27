@@ -89,13 +89,33 @@ def item_detail(request, identifier):
     return render(request, "collections/item_detail.html", {"item": item})
 
 def collection_detail(request, collection_slug):
-    collection = get_object_or_404(Collection, slug=collection_slug)
-    items = Item.objects.filter(collections=collection)
+    collections = {
+        'textbooks': {
+            'title': 'Textbooks',
+            'description': 'Browse through a wide range of textbooks available for rent, covering all subjects and majors.',
+            'image': 'https://via.placeholder.com/400x250?text=Textbooks',
+        },
+        'calculators': {
+            'title': 'Calculators',
+            'description': 'Need a calculator for your exams or projects? Check out our collection of scientific and graphing calculators.',
+            'image': 'https://via.placeholder.com/400x250?text=Calculators',
+        },
+        'chargers': {
+            'title': 'Chargers',
+            'description': 'Find any charger from phone chargers to laptop chargers.',
+            'image': 'https://via.placeholder.com/400x250?text=Chargers',
+        },
+    }
 
-    return render(request, 'collections/collection_detail.html', {
+    collection = collections.get(collection_slug)
+    if not collection:
+        return render(request, '404.html', status=404)
+
+    return render(request, 'collection_detail.html', {
         'collection': collection,
-        'items': items,
+        'slug': collection_slug
     })
+
 
 # def textbooks(request):
 #     return render(request, 'collections/textbooks.html')
