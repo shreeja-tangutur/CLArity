@@ -8,24 +8,6 @@
 <div class="mx-auto my-5" style="width: 200px;">
     <div class="profile-pic">
         {% if profile.profile_picture %}
-            <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid" width="200">
-        {% else %}
-            <!-- Default SVG icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
-                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
-            </svg>
-        {% endif %}
-        <div class="text-center">
-            <label for="profile_picture">Upload Profile Picture</label>:
-            <input id="profile-image-upload" class="hidden" type="file" onchange="previewFile()" >
-        </div>
-    </div>
-</nav>
-
-<div class="mx-auto my-5" style="width: 200px;">
-    <div class="profile-pic">
-        {% if profile.profile_picture %}
             <img id="profile-preview" src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid" width="200">
         {% else %}
             <svg id="profile-preview" xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
@@ -57,7 +39,7 @@
             <div class="card-body">
                 <h5 class="card-title">Textbooks</h5>
                 <p class="card-text">Browse through a wide range of textbooks available for rent, covering all subjects and majors.</p>
-                <a href="{% url 'textbooks' %}" class="btn btn-primary">View Textbooks</a>
+                    <a href="{% url 'collection_detail' collection_slug='textbooks' %}" class="btn btn-primary">View Textbooks</a>
             </div>
         </div>
     </div>
@@ -69,8 +51,7 @@
             <div class="card-body">
                 <h5 class="card-title">Calculators</h5>
                 <p class="card-text">Need a calculator for your exams or projects? Check out our collection of scientific and graphing calculators.</p>
-                <a href="{% url 'calculators' %}" class="btn btn-primary">View Calculators</a>
-            </div>
+                <a href="{% url 'collection_detail' collection_slug='calculators' %}" class="btn btn-primary">View Calculators</a>            </div>
         </div>
     </div>
 
@@ -81,7 +62,7 @@
             <div class="card-body">
                 <h5 class="card-title">Chargers</h5>
                 <p class="card-text">Find any charger from phone chargers to laptop chargers.</p>
-                <a href="{% url 'chargers' %}" class="btn btn-primary">View Lab Coats</a>
+                <a href="{% url 'collection_detail' collection_slug='chargers' %}" class="btn btn-primary">View Chargers</a>
             </div>
         </div>
     </div>

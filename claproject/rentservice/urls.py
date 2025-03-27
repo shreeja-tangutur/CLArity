@@ -7,13 +7,19 @@ urlpatterns = [
     path('auth-receiver', views.auth_receiver, name='auth_receiver'),
     path('librarian-dashboard/', views.librarian_dashboard, name='librarian_dashboard'),
     path('patron-dashboard/', views.patron_dashboard, name='patron_dashboard'),
-    path('textbooks/', views.textbooks, name= 'textbooks'), 
-    path('calculators/', views.calculators, name = 'calculators'),
-    path('chargers/', views.chargers, name = 'chargers'),
+    # path('textbooks/', views.textbooks, name= 'textbooks'),
+    # path('calculators/', views.calculators, name = 'calculators'),
+    # path('chargers/', views.chargers, name = 'chargers'),
     path('search/', views.search_items, name='search_items'),
     path('cart/', views.view_cart, name='cart'),
     path('cart/add/<int:item_id>/', views.add_to_cart, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('checkout/', views.checkout, name='checkout'),
-    path('browse/', views.anonymous_home, name='anonymous_home')
+    path('browse/', views.anonymous_home, name='anonymous_home'),
+
+
+    path('collection/<slug:collection_slug>/', views.collection_detail, name='collection_detail'),
+    path('search/<slug:search_slug>/', views.search_items, name='search_results'),
+    path('item/<str:identifier>/', views.item_detail, name='item_detail'),
+
 ]

@@ -1,25 +1,18 @@
-from django.shortcuts import render
-
-# Create your views here.
 import os
 import logging
+import slugify
 
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
-from .models import Profile, User
-from .models import Profile, Item
+from .models import Profile, User, Item
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
-
 from .models import Item, Collection
-from django.db.models import Q 
-
 
 @csrf_exempt
 def sign_in(request):
@@ -31,14 +24,11 @@ def sign_in(request):
     
     return render(request, 'sign_in.html')
 
-
 @csrf_exempt
 def auth_receiver(request):
-    
     token = request.POST.get('credential')
     if not token:
         return HttpResponse("No token provided", status=400)
-
     try:
         user_data = id_token.verify_oauth2_token(
             token, requests.Request(), os.environ['GOOGLE_OAUTH_CLIENT_ID']
@@ -50,7 +40,6 @@ def auth_receiver(request):
     name = user_data.get("name")
 
     user, created = User.objects.get_or_create(username=email, defaults={"email": email, "first_name": name})
-
     # user is patron by default
     if created:
         patron_group, _ = Group.objects.get_or_create(name="Patron")
@@ -75,7 +64,6 @@ def sign_out(request):
     logout(request)
     return redirect('sign_in')
 
-
 def librarian_dashboard(request):
     return render(request, "librarian_dashboard.html")
 
@@ -83,14 +71,46 @@ def librarian_dashboard(request):
 def patron_dashboard(request):
     return render(request, "patron_dashboard.html")
 
-def textbooks(request):
-    return render(request, 'collections/textbooks.html')
+def item_detail(request, identifier):
+    item = get_object_or_404(Item, identifier=identifier)
+    return render(request, "collections/item_detail.html", {"item": item})
 
-def calculators(request):
-    return render(request, 'collections/calculators.html')
+def collection_detail(request, collection_slug):
+    collections = {
+        'textbooks': {
+            'title': 'Textbooks',
+            'description': 'Browse through a wide range of textbooks available for rent, covering all subjects and majors.',
+            'image': 'images/textbook.jpg',
+        },
+        'calculators': {
+            'title': 'Calculators',
+            'description': 'Need a calculator for your exams or projects? Check out our collection of scientific and graphing calculators.',
+            'image': 'images/calculator.jpg',
+        },
+        'chargers': {
+            'title': 'Chargers',
+            'description': 'Find any charger from phone chargers to laptop chargers.',
+            'image': 'images/charger.jpg',
+        },
+    }
 
-def chargers(request):
-    return render(request, 'collections/chargers.html')
+    collection = collections.get(collection_slug)
+    if not collection:
+        return render(request, '404.html', status=404)
+
+    return render(request, 'collections/collection_detail.html', {
+        'collection': collection,
+        'slug': collection_slug
+    })
+
+# def textbooks(request):
+#     return render(request, 'collections/textbooks.html')
+#
+# def calculators(request):
+#     return render(request, 'collections/calculators.html')
+#
+# def chargers(request):
+#     return render(request, 'collections/chargers.html')
 
 def patron_dashboard_view(request):
     profile = Profile.objects.get(user=request.user)
@@ -111,7 +131,6 @@ def patron_dashboard_view(request):
             print("❌ No file received in request.FILES!")
 
     return render(request, 'patron_dashboard.html', {'profile': profile})
-
 
 @csrf_exempt
 def search_items(request):
@@ -198,3 +217,5 @@ def checkout(request):
     request.session['cart'] = []
 
     return render(request, 'checkout.html', {'items': items})
+
+
