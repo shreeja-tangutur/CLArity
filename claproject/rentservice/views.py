@@ -17,6 +17,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 
+from .models import Item, Collection
+from django.db.models import Q 
+
+
 @csrf_exempt
 def sign_in(request):
     if request.user.is_authenticated:
@@ -56,6 +60,16 @@ def auth_receiver(request):
 
     return redirect('sign_in')
 
+def anonymous_home(request):
+    public_collections = Collection.objects.filter(is_public=True)
+    items_not_in_any_collection = Item.objects.filter(collections=None)
+    items_in_public_collection = Item.objects.filter(collections__in=public_collections)
+
+    visible_to_user = (items_not_in_any_collection | items_in_public_collection).distinct()
+    return render(request, "anonymous_home.html", {
+        "collections": public_collections, 
+        "items": visible_to_user
+    })
 
 def sign_out(request):
     logout(request)
