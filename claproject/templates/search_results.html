@@ -12,8 +12,9 @@
       <ul class="list-group">
           {% for item in results %}
               <li class="list-group-item">
-                  {{ item.title }} - {{ item.status }}
-                  <!-- "Add to Cart" button can be added here later -->
+                  <a href="{% url 'item_detail' item.identifier %}" class="text-decoration-none">
+                      {{ item.title }} - {{ item.status }}
+                  </a>
               </li>
           {% endfor %}
       </ul>
@@ -21,3 +22,4 @@
       <p>No items found matching your query.</p>
   {% endif %}
 {% endblock content %}
+

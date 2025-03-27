@@ -1,11 +1,14 @@
 import os
 import logging
 import slugify
+import openpyxl
 
 from django.http import HttpResponse
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
 from .models import Profile, User, Item
@@ -71,6 +74,11 @@ def librarian_dashboard(request):
 def patron_dashboard(request):
     return render(request, "patron_dashboard.html")
 
+def items_list(request):
+    items = Item.objects.filter(deleted=False)
+    return render(request, 'items_list.html', {'items': items})
+
+
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
     return render(request, "collections/item_detail.html", {"item": item})
@@ -98,19 +106,14 @@ def collection_detail(request, collection_slug):
     if not collection:
         return render(request, '404.html', status=404)
 
+    items = Item.objects.filter(collections__title__iexact=collection['title'])
+
     return render(request, 'collections/collection_detail.html', {
         'collection': collection,
+        'items': items,
         'slug': collection_slug
     })
 
-# def textbooks(request):
-#     return render(request, 'collections/textbooks.html')
-#
-# def calculators(request):
-#     return render(request, 'collections/calculators.html')
-#
-# def chargers(request):
-#     return render(request, 'collections/chargers.html')
 
 def patron_dashboard_view(request):
     profile = Profile.objects.get(user=request.user)
@@ -219,3 +222,80 @@ def checkout(request):
     return render(request, 'checkout.html', {'items': items})
 
 
+def upload_xlsx(request):
+    if request.method == 'POST' and request.FILES.get('xlsx_file'):
+        xlsx_file = request.FILES['xlsx_file']
+        try:
+            wb = openpyxl.load_workbook(xlsx_file)
+            ws = wb.active
+        except Exception as e:
+            messages.error(request, f"Error reading XLSX file: {e}")
+            return render(request, 'upload_xlsx.html')
+
+        # Read the first row as headers
+        headers = []
+        for cell in next(ws.iter_rows(min_row=1, max_row=1)):
+            headers.append(str(cell.value).strip() if cell.value else "")
+
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            data = dict(zip(headers, row))
+            identifier = data.get("identifier")
+            title = data.get("title", "")
+            description = data.get("description", "")
+            location = data.get("location", "")
+            status = data.get("status", "available")
+            try:
+                rating = float(data.get("rating", 0))
+            except (TypeError, ValueError):
+                rating = 0.0
+            try:
+                borrow_period_days = int(data.get("borrow_period_days", 30))
+            except (TypeError, ValueError):
+                borrow_period_days = 30
+            try:
+                condition = int(data.get("condition", 10))
+            except (TypeError, ValueError):
+                condition = 10
+
+            if not identifier:
+                messages.error(request, "Identifier missing for a row; skipping it.")
+                continue
+
+            try:
+                item, created = Item.objects.get_or_create(
+                    identifier=identifier,
+                    defaults={
+                        'title': title,
+                        'description': description,
+                        'location': location,
+                        'status': status if status in dict(Item.STATUS_CHOICES) else 'available',
+                        'rating': rating,
+                        'borrow_period_days': borrow_period_days,
+                        'condition': condition,
+                    }
+                )
+                if not created:
+                    item.title = title
+                    item.description = description
+                    item.location = location
+                    if status in dict(Item.STATUS_CHOICES):
+                        item.status = status
+                    item.rating = rating
+                    item.borrow_period_days = borrow_period_days
+                    item.condition = condition
+                    item.save()
+
+                collections_str = data.get("collections", "")
+                if collections_str:
+                    collection_names = [name.strip() for name in collections_str.split(",") if name.strip()]
+                    for col_name in collection_names:
+                        # Assuming your Collection model uses 'title' for the collection name
+                        collection_obj, _ = Collection.objects.get_or_create(title=col_name)
+                        item.collections.add(collection_obj)
+            except Exception as e:
+                messages.error(request, f"Error processing item with identifier {identifier}: {e}")
+                continue
+
+        messages.success(request, "XLSX data uploaded successfully!")
+        return redirect('items_list')  # Adjust the redirect URL name as needed
+    return render(request, 'upload.html')

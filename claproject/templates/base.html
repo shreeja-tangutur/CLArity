@@ -12,7 +12,11 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container d-flex justify-content-between align-items-center">
         <!-- Left side: Brand -->
-        <a class="navbar-brand" href="#">Renting App</a>
+        {% if request.user.is_authenticated and request.user.is_librarian %}
+            <a class="navbar-brand" href="{% url 'librarian_dashboard' %}">Renting App</a>
+        {% else %}
+            <a class="navbar-brand" href="{% url 'patron_dashboard' %}">Renting App</a>
+        {% endif %}
 
         <!-- Center: Search Form -->
         <form class="d-flex mx-5" action="{% url 'search_items' %}" method="get">
@@ -22,12 +26,15 @@
 
         <!-- Right side: User Info, Cart Icon, and Sign Out -->
         <div class="d-flex align-items-center">
-          <span class="navbar-text me-3">Welcome, {{ request.user.first_name }}!</span>
-          <!-- Shopping Cart Icon -->
-          <a href="{% url 'cart' %}" class="btn btn-outline-light me-3">
-              <i class="bi bi-cart"></i>
-          </a>
-          <a href="{% url 'sign_out' %}" class="btn btn-outline-light">Sign Out</a>
+          {% if request.user.is_authenticated %}
+              <span class="navbar-text me-3">Welcome, {{ request.user.first_name }}!</span>
+              <a href="{% url 'cart' %}" class="btn btn-outline-light me-3">
+                  <i class="bi bi-cart"></i>
+              </a>
+              <a href="{% url 'sign_out' %}" class="btn btn-outline-light">Sign Out</a>
+          {% else %}
+              <a href="{% url 'sign_in' %}" class="btn btn-outline-light">Sign In</a>
+          {% endif %}
         </div>
       </div>
     </nav>
@@ -46,3 +53,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
+
