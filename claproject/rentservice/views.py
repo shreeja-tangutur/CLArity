@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group
 from .models import Profile, User, Item
@@ -105,19 +106,14 @@ def collection_detail(request, collection_slug):
     if not collection:
         return render(request, '404.html', status=404)
 
+    items = Item.objects.filter(collections__title__iexact=collection['title'])
+
     return render(request, 'collections/collection_detail.html', {
         'collection': collection,
+        'items': items,
         'slug': collection_slug
     })
 
-# def textbooks(request):
-#     return render(request, 'collections/textbooks.html')
-#
-# def calculators(request):
-#     return render(request, 'collections/calculators.html')
-#
-# def chargers(request):
-#     return render(request, 'collections/chargers.html')
 
 def patron_dashboard_view(request):
     profile = Profile.objects.get(user=request.user)
@@ -226,13 +222,6 @@ def checkout(request):
     return render(request, 'checkout.html', {'items': items})
 
 
-import xml.etree.ElementTree as ET
-from django.shortcuts import render, redirect
-from django.contrib import messages  # for feedback
-from .models import Item
-from django.core.validators import MinValueValidator, MaxValueValidator
-
-
 def upload_xlsx(request):
     if request.method == 'POST' and request.FILES.get('xlsx_file'):
         xlsx_file = request.FILES['xlsx_file']
@@ -243,7 +232,7 @@ def upload_xlsx(request):
             messages.error(request, f"Error reading XLSX file: {e}")
             return render(request, 'upload_xlsx.html')
 
-        # Assume first row contains headers matching your Item model field names
+        # Read the first row as headers
         headers = []
         for cell in next(ws.iter_rows(min_row=1, max_row=1)):
             headers.append(str(cell.value).strip() if cell.value else "")
@@ -263,37 +252,50 @@ def upload_xlsx(request):
                 borrow_period_days = int(data.get("borrow_period_days", 30))
             except (TypeError, ValueError):
                 borrow_period_days = 30
+            try:
+                condition = int(data.get("condition", 10))
+            except (TypeError, ValueError):
+                condition = 10
 
-            if identifier:
-                try:
-                    # Use get_or_create to avoid duplicate identifiers (which are unique)
-                    item, created = Item.objects.get_or_create(
-                        identifier=identifier,
-                        defaults={
-                            'title': title,
-                            'description': description,
-                            'location': location,
-                            'status': status if status in dict(Item.STATUS_CHOICES) else 'available',
-                            'rating': rating,
-                            'borrow_period_days': borrow_period_days,
-                        }
-                    )
-                    if not created:
-                        # Optionally update existing item
-                        item.title = title
-                        item.description = description
-                        item.location = location
-                        if status in dict(Item.STATUS_CHOICES):
-                            item.status = status
-                        item.rating = rating
-                        item.borrow_period_days = borrow_period_days
-                        item.save()
-                except Exception as e:
-                    messages.error(request, f"Error processing item with identifier {identifier}: {e}")
-                    continue
-            else:
+            if not identifier:
                 messages.error(request, "Identifier missing for a row; skipping it.")
+                continue
+
+            try:
+                item, created = Item.objects.get_or_create(
+                    identifier=identifier,
+                    defaults={
+                        'title': title,
+                        'description': description,
+                        'location': location,
+                        'status': status if status in dict(Item.STATUS_CHOICES) else 'available',
+                        'rating': rating,
+                        'borrow_period_days': borrow_period_days,
+                        'condition': condition,
+                    }
+                )
+                if not created:
+                    item.title = title
+                    item.description = description
+                    item.location = location
+                    if status in dict(Item.STATUS_CHOICES):
+                        item.status = status
+                    item.rating = rating
+                    item.borrow_period_days = borrow_period_days
+                    item.condition = condition
+                    item.save()
+
+                collections_str = data.get("collections", "")
+                if collections_str:
+                    collection_names = [name.strip() for name in collections_str.split(",") if name.strip()]
+                    for col_name in collection_names:
+                        # Assuming your Collection model uses 'title' for the collection name
+                        collection_obj, _ = Collection.objects.get_or_create(title=col_name)
+                        item.collections.add(collection_obj)
+            except Exception as e:
+                messages.error(request, f"Error processing item with identifier {identifier}: {e}")
+                continue
 
         messages.success(request, "XLSX data uploaded successfully!")
-        return redirect('items_list')
+        return redirect('items_list')  # Adjust the redirect URL name as needed
     return render(request, 'upload.html')
