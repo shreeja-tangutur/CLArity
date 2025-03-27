@@ -66,7 +66,6 @@ def anonymous_home(request):
     items_in_public_collection = Item.objects.filter(collections__in=public_collections)
 
     visible_to_user = (items_not_in_any_collection | items_in_public_collection).distinct()
-
     return render(request, "anonymous_home.html", {
         "collections": public_collections, 
         "items": visible_to_user
