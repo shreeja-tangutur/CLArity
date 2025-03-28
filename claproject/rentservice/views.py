@@ -17,15 +17,20 @@ from django.contrib.auth.decorators import login_required
 
 from .models import Item, Collection
 
+
 @csrf_exempt
 def sign_in(request):
     if request.user.is_authenticated:
         if request.user.groups.filter(name="Librarian").exists():
-            return redirect('librarian_dashboard')
+            user_group = "Librarian"
         else:
-            return redirect('patron_dashboard')
+            user_group = "Patron"
+
+        request.session['user_group'] = user_group
+        return redirect('dashboard')
 
     return render(request, 'sign_in.html')
+
 
 @csrf_exempt
 def auth_receiver(request):
@@ -50,7 +55,32 @@ def auth_receiver(request):
 
     login(request, user)
 
-    return redirect('sign_in')
+    if user.groups.filter(name="Librarian").exists():
+        user_type = "librarian"
+    else:
+        user_type = "patron"
+    request.session['user_type'] = user_type
+
+    return redirect('dashboard')
+
+
+def dashboard(request):
+    if request.user.is_authenticated:
+        if request.user.groups.filter(name="Librarian").exists():
+            user_type = "librarian"
+        else:
+            user_type = "patron"
+        profile = request.user.profile
+    else:
+        user_type = "anonymous"
+        profile = None
+
+    context = {
+        'user_type': user_type,
+        'profile': profile,
+    }
+    return render(request, 'dashboard/dashboard.html', context)
+
 
 def anonymous_home(request):
     public_collections = Collection.objects.filter(is_public=True)
@@ -63,16 +93,11 @@ def anonymous_home(request):
         "items": visible_to_user
     })
 
+
 def sign_out(request):
     logout(request)
-    return redirect('sign_in')
+    return redirect('dashboard')
 
-def librarian_dashboard(request):
-    return render(request, "librarian_dashboard.html")
-
-
-def patron_dashboard(request):
-    return render(request, "patron_dashboard.html")
 
 def items_list(request):
     items = Item.objects.filter(deleted=False)
@@ -82,6 +107,7 @@ def items_list(request):
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
     return render(request, "collections/item_detail.html", {"item": item})
+
 
 def collection_detail(request, collection_slug):
     collections = {
@@ -115,25 +141,25 @@ def collection_detail(request, collection_slug):
     })
 
 
-def patron_dashboard_view(request):
-    profile = Profile.objects.get(user=request.user)
-
-    if request.method == 'POST':
-        print("📢 Form submitted!")  # Debugging print
-
-        if 'profile_picture' in request.FILES:
-            profile_picture = request.FILES['profile_picture']
-            print(f"📢 Received file: {profile_picture.name}")  # Debugging print
-
-            profile.profile_picture = profile_picture
-            profile.save()
-
-            print("✅ Profile picture updated!")
-            return redirect('patron_dashboard')
-        else:
-            print("❌ No file received in request.FILES!")
-
-    return render(request, 'patron_dashboard.html', {'profile': profile})
+# def patron_dashboard_view(request):
+#     profile = Profile.objects.get(user=request.user)
+#
+#     if request.method == 'POST':
+#         print("📢 Form submitted!")  # Debugging print
+#
+#         if 'profile_picture' in request.FILES:
+#             profile_picture = request.FILES['profile_picture']
+#             print(f"📢 Received file: {profile_picture.name}")  # Debugging print
+#
+#             profile.profile_picture = profile_picture
+#             profile.save()
+#
+#             print("✅ Profile picture updated!")
+#             return redirect('patron_dashboard')
+#         else:
+#             print("❌ No file received in request.FILES!")
+#
+#     return render(request, '_patron_dashboard.html', {'profile': profile})
 
 @csrf_exempt
 def search_items(request):
@@ -147,6 +173,7 @@ def search_items(request):
         'results': results
     })
 
+
 def patron_dashboard_view(request):
     profile = Profile.objects.get(user=request.user)
 
@@ -158,7 +185,16 @@ def patron_dashboard_view(request):
 
         return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
 
-    return render(request, 'patron_dashboard.html', {'profile': profile})
+    return render(request, '_patron_dashboard.html', {'profile': profile})
+
+
+def profile(request):
+    return render(request, 'profile.html')
+
+
+def setting(request):
+    return render(request, 'setting.html')
+
 
 @login_required
 def add_to_cart(request, item_id):
@@ -221,8 +257,10 @@ def checkout(request):
 
     return render(request, 'checkout.html', {'items': items})
 
+
 def profile(request):
     return render(request, 'profile.html')
+
 
 def setting(request):
     return render(request, 'setting.html')
