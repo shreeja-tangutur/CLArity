@@ -22,12 +22,10 @@
       <p>No items found matching your query.</p>
   {% endif %}
 
+    <!-- Back to Home Button -->
     <div class="text-center mt-4">
-        {% if request.user.is_authenticated and request.user.is_librarian %}
-            <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Home</a>
-        {% else %}
-            <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
-        {% endif %}
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Home</a>
     </div>
+
 {% endblock content %}
 

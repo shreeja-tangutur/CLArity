@@ -1,8 +1,9 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Login Page</title>
+    <title>Sign In | Renting App</title>
     <script src="https://accounts.google.com/gsi/client" async></script>
     <style>
       body {
@@ -14,66 +15,58 @@
         height: 100vh;
         margin: 0;
       }
-
       .container {
         background-color: white;
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         text-align: center;
+        width: 300px;  /* Adjust width as needed */
       }
-
-      img {
-        border-radius: 50%;
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-        margin-top: 10px;
+      h1 {
+        margin-bottom: 10px;
       }
-
       p {
         color: #333;
         margin: 10px 0;
       }
-
       a {
         color: #007bff;
         text-decoration: none;
         font-weight: bold;
       }
-
       a:hover {
         text-decoration: underline;
       }
-
+      /* Ensure the Google sign in button is centered */
       .g_id_signin {
         margin-top: 20px;
+        text-align: center;
       }
     </style>
   </head>
 
   <body>
     <div class="container">
-        <div>
-          <p>HooShare</p>
-          <p>Click below to sign in with Google</p>
-          <div id="g_id_onload"
-              data-client_id="683944864188-nv0u2bublsje9kf4i3oh1ecrrgfdr476.apps.googleusercontent.com"
-              data-context="signin"
-              data-ux_mode="popup"
-              data-login_uri="https://swe-b26-cla-app-2f731f490027.herokuapp.com/auth-receiver/"
-              data-auto_prompt="false">
-          </div>
+        <h1>Welcome to Renting App</h1>
+        <p>Sign in with Google to access your dashboard.</p>
+        <div id="g_id_onload"
+            data-client_id="683944864188-nv0u2bublsje9kf4i3oh1ecrrgfdr476.apps.googleusercontent.com"
+            data-context="signin"
+            data-ux_mode="popup"
+            data-login_uri="https://swe-b26-cla-app-2f731f490027.herokuapp.com/auth-receiver/"
+            data-auto_prompt="false">
+        </div>
 
-          <div class="g_id_signin"
-              data-type="standard"
-              data-shape="rectangular"
-              data-theme="outline"
-              data-text="signin_with"
-              data-size="large"
-              data-logo_alignment="left">
-          </div>
+        <div class="g_id_signin"
+            data-type="standard"
+            data-shape="rectangular"
+            data-theme="outline"
+            data-text="signin_with"
+            data-size="large"
+            data-logo_alignment="center">
         </div>
     </div>
   </body>
 </html>
+
