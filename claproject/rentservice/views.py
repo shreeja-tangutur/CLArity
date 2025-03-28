@@ -247,6 +247,12 @@ def checkout(request):
 
     return render(request, 'checkout.html', {'items': items})
 
+def profile(request):
+    return render(request, 'profile.html')
+
+def setting(request):
+    return render(request, 'setting.html')
+
 
 def upload_xlsx(request):
     if request.method == 'POST' and request.FILES.get('xlsx_file'):
