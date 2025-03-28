@@ -59,6 +59,14 @@
             <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
         {% endif %}
     </div>
+
+    <div class="text-center mt-4">
+        {% if request.user.is_authenticated and request.user.is_librarian %}
+            <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+        {% else %}
+            <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+        {% endif %}
+    </div>
 </div>
 {% endblock content %}
 

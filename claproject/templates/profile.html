@@ -22,10 +22,19 @@
                 <div class="text-center">
                     <label for="profile-image-upload">Upload Profile Picture</label>:
                     <input id="profile-image-upload" type="file" name="profile_picture" accept="image/png, image/jpeg, image/gif" onchange="previewFile()">
+                    <button type="submit" class="btn btn-primary mt-2">Save</button>
                 </div>
-                <button type="submit" class="btn btn-primary mt-2">Save</button>
             </form>
         </div>
     </div>
+    <div class="text-center mt-4">
+        {% if request.user.is_authenticated and request.user.is_librarian %}
+            <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+        {% else %}
+            <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+        {% endif %}
+    </div>
 </div>
+
+
 {% endblock content %}
