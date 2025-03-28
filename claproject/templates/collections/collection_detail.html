@@ -1,61 +1,56 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ collection.title }} | Collection Detail</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body>
-    <div class="container my-5">
-        <h1 class="text-center mb-4">{{ collection.title }}</h1>
 
-        {% if collection.image %}
-            <div class="text-center mb-4">
-                <img src="{% static collection.image %}" class="img-fluid" alt="{{ collection.title }}" style="max-width: 400px;">
-            </div>
-        {% endif %}
+{% block title %}Collection Detail{% endblock title %}
 
-        <p class="lead text-center">{{ collection.description }}</p>
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">{{ collection.title }}</h1>
 
-        <hr>
-        <h2 class="text-center mb-4">Items in this Collection</h2>
+    {% if collection.image %}
+        <div class="text-center mb-4">
+            <img src="{% static collection.image %}" class="img-fluid" alt="{{ collection.title }}" style="max-width: 400px;">
+        </div>
+    {% endif %}
 
-        {% if items %}
-            <div class="row">
-                {% for item in items %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100">
-                            {% if item.image %}
-                                <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}">
-                            {% else %}
-                                <!-- Fallback image if none uploaded -->
-                                <img src="{% static 'default_item.jpg' %}" class="card-img-top" alt="{{ item.title }}">
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title">{{ item.title }}</h5>
-                                <p class="card-text">{{ item.description|truncatechars:100 }}</p>
-                            </div>
-                            <div class="card-footer text-center">
-                                <a href="{% url 'item_detail' item.identifier %}" class="btn btn-primary">View Details</a>
-                            </div>
+    <p class="lead text-center">{{ collection.description }}</p>
+
+    <hr>
+    <h2 class="text-center mb-4">Items in this Collection</h2>
+
+    {% if items %}
+        <div class="row">
+            {% for item in items %}
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}">
+                        {% else %}
+                            <img src="{% static 'default_item.jpg' %}" class="card-img-top" alt="{{ item.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            <p class="card-text">{{ item.description|truncatechars:100 }}</p>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="{% url 'item_detail' item.identifier %}" class="btn btn-primary">View Details</a>
                         </div>
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-center">No items in this collection.</p>
-        {% endif %}
-
-        <div class="text-center mt-4">
-            {% if request.user.is_authenticated and request.user.is_librarian %}
-                <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Home</a>
-            {% else %}
-                <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
-            {% endif %}
+                </div>
+            {% endfor %}
         </div>
+    {% else %}
+        <p class="text-center">No items in this collection.</p>
+    {% endif %}
+
+    <div class="text-center mt-4">
+        {% if request.user.is_authenticated and request.user.is_librarian %}
+            <a href="{% url 'librarian_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+        {% else %}
+            <a href="{% url 'patron_dashboard' %}" class="btn btn-secondary">Back to Home</a>
+        {% endif %}
     </div>
-</body>
-</html>
+</div>
+{% endblock content %}
 
 
