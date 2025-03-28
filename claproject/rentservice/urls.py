@@ -24,4 +24,8 @@ urlpatterns = [
     # Temporary
     path('upload-xlsx/', views.upload_xlsx, name='upload_xlsx'),
     path('items/', views.items_list, name='items_list'),
+
+    # Menu
+    path('profile/', views.profile, name='profile'),
+    path('settings/', views.setting, name='setting'),
 ]
