@@ -29,7 +29,7 @@ def sign_in(request):
         request.session['user_group'] = user_group
         return redirect('dashboard')
 
-    return render(request, 'sign_in.html')
+    return render(request, 'registration/sign_in.html')
 
 
 @csrf_exempt
