@@ -21,5 +21,11 @@
   {% else %}
       <p>No items found matching your query.</p>
   {% endif %}
+
+    <!-- Back to Home Button -->
+    <div class="text-center mt-4">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Home</a>
+    </div>
+
 {% endblock content %}
 

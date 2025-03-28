@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    {% if user_type == "anonymous" %}
+        {% include 'dashboard/_anonymous_dashboard.html' %}
+    {% elif user_type == "patron" %}
+        {% include 'dashboard/_patron_dashboard.html' %}
+    {% elif user_type == "librarian" %}
+        {% include 'dashboard/_patron_dashboard.html' %}
+        {% include 'dashboard/_librarian_dashboard.html' %}
+    {% else %}
+        <h1>Welcome to Renting App</h1>
+    {% endif %}
+</div>
+{% endblock content %}
+
+
+
+
+

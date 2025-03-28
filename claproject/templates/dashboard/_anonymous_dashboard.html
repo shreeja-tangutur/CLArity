@@ -1,0 +1,41 @@
+<div class="text-center">
+    <h1>Explore Our Collections</h1>
+</div>
+
+<div class="row">
+    <!-- Textbooks Collection -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <img src="https://via.placeholder.com/400x250?text=Textbooks" class="card-img-top" alt="Textbooks">
+            <div class="card-body">
+                <h5 class="card-title">Textbooks</h5>
+                <p class="card-text">Browse through a wide range of textbooks available for rent, covering all subjects and majors.</p>
+                <a href="{% url 'collection_detail' collection_slug='textbooks' %}" class="btn btn-primary">View Textbooks</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculators Collection -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <img src="https://via.placeholder.com/400x250?text=Calculators" class="card-img-top" alt="Calculators">
+            <div class="card-body">
+                <h5 class="card-title">Calculators</h5>
+                <p class="card-text">Check out our collection of scientific and graphing calculators.</p>
+                <a href="{% url 'collection_detail' collection_slug='calculators' %}" class="btn btn-primary">View Calculators</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chargers Collection -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <img src="https://via.placeholder.com/400x250?text=Chargers" class="card-img-top" alt="Chargers">
+            <div class="card-body">
+                <h5 class="card-title">Chargers</h5>
+                <p class="card-text">Find chargers from phone to laptop varieties.</p>
+                <a href="{% url 'collection_detail' collection_slug='chargers' %}" class="btn btn-primary">View Chargers</a>
+            </div>
+        </div>
+    </div>
+</div>

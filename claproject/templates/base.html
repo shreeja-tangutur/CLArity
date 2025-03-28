@@ -12,12 +12,8 @@
     <!-- NAVBAR WITH SEARCH -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container d-flex justify-content-between align-items-center">
-        <!-- Left side: Brand -->
-        {% if request.user.is_authenticated and request.user.is_librarian %}
-            <a class="navbar-brand" href="{% url 'librarian_dashboard' %}">Renting App</a>
-        {% else %}
-            <a class="navbar-brand" href="{% url 'patron_dashboard' %}">Renting App</a>
-        {% endif %}
+        <!-- Left side: Brand always points to unified dashboard -->
+        <a class="navbar-brand" href="{% url 'dashboard' %}">Renting App</a>
 
         <!-- Center: Search Form -->
         <form class="d-flex mx-5" action="{% url 'search_items' %}" method="get">
@@ -25,7 +21,7 @@
           <button class="btn btn-outline-light ms-2" type="submit">Search</button>
         </form>
 
-        <!-- Right side: User Info, Cart Icon, and Sign Out -->
+        <!-- Right side: User Info, Cart Icon, and Sign In/Out -->
         <div class="d-flex align-items-center">
           {% if request.user.is_authenticated %}
               <span class="navbar-text me-3">Welcome, {{ request.user.first_name }}!</span>
@@ -54,6 +50,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 
 
