@@ -21,13 +21,10 @@ from .models import Item, Collection
 def sign_in(request):
     if request.user.is_authenticated:
         if request.user.groups.filter(name="Librarian").exists():
-            user_group = "Librarian"
+            return redirect('librarian_dashboard')
         else:
-            user_group = "Patron"
+            return redirect('patron_dashboard')
 
-        request.session['user_group'] = user_group
-        return redirect('dashboard')
-    
     return render(request, 'sign_in.html')
 
 @csrf_exempt
@@ -53,31 +50,7 @@ def auth_receiver(request):
 
     login(request, user)
 
-    if user.groups.filter(name="Librarian").exists():
-        user_type = "librarian"
-    else:
-        user_type = "patron"
-    request.session['user_type'] = user_type
-
-    return redirect('dashboard')
-
-def dashboard(request):
-    if request.user.is_authenticated:
-        if request.user.groups.filter(name="Librarian").exists():
-            user_type = "librarian"
-        else:
-            user_type = "patron"
-        profile = request.user.profile
-    else:
-        user_type = "anonymous"
-        profile = None
-
-    context = {
-        'user_type': user_type,
-        'profile': profile,
-    }
-    return render(request, 'dashboard/dashboard.html', context)
-
+    return redirect('sign_in')
 
 def anonymous_home(request):
     public_collections = Collection.objects.filter(is_public=True)
@@ -86,13 +59,20 @@ def anonymous_home(request):
 
     visible_to_user = (items_not_in_any_collection | items_in_public_collection).distinct()
     return render(request, "anonymous_home.html", {
-        "collections": public_collections, 
+        "collections": public_collections,
         "items": visible_to_user
     })
 
 def sign_out(request):
     logout(request)
-    return redirect('dashboard')
+    return redirect('sign_in')
+
+def librarian_dashboard(request):
+    return render(request, "librarian_dashboard.html")
+
+
+def patron_dashboard(request):
+    return render(request, "patron_dashboard.html")
 
 def items_list(request):
     items = Item.objects.filter(deleted=False)
@@ -153,11 +133,11 @@ def patron_dashboard_view(request):
         else:
             print("❌ No file received in request.FILES!")
 
-    return render(request, '_patron_dashboard.html', {'profile': profile})
+    return render(request, 'patron_dashboard.html', {'profile': profile})
 
 @csrf_exempt
 def search_items(request):
-    query = request.GET.get('q', '')  
+    query = request.GET.get('q', '')
     results = []
 
     if query:
@@ -172,19 +152,13 @@ def patron_dashboard_view(request):
 
     if request.method == 'POST' and request.FILES.get('profile_picture'):
         profile_picture = request.FILES['profile_picture']
-        
+
         profile.profile_picture = profile_picture
         profile.save()
 
         return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
 
-    return render(request, '_patron_dashboard.html', {'profile': profile})
-
-def profile(request):
-    return render(request, 'profile.html')
-
-def setting(request):
-    return render(request, 'setting.html')
+    return render(request, 'patron_dashboard.html', {'profile': profile})
 
 @login_required
 def add_to_cart(request, item_id):
