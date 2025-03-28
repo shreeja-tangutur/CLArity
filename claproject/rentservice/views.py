@@ -88,7 +88,7 @@ def anonymous_home(request):
     items_in_public_collection = Item.objects.filter(collections__in=public_collections)
 
     visible_to_user = (items_not_in_any_collection | items_in_public_collection).distinct()
-    return render(request, "anonymous_home.html", {
+    return render(request, "base/anonymous_home.html", {
         "collections": public_collections,
         "items": visible_to_user
     })
@@ -101,7 +101,7 @@ def sign_out(request):
 
 def items_list(request):
     items = Item.objects.filter(deleted=False)
-    return render(request, 'items_list.html', {'items': items})
+    return render(request, 'search/items_list.html', {'items': items})
 
 
 def item_detail(request, identifier):
@@ -168,32 +168,32 @@ def search_items(request):
 
     if query:
         results = Item.objects.filter(title__icontains=query)
-    return render(request, 'search_results.html', {
+    return render(request, 'search/search_results.html', {
         'query': query,
         'results': results
     })
 
 
-def patron_dashboard_view(request):
-    profile = Profile.objects.get(user=request.user)
-
-    if request.method == 'POST' and request.FILES.get('profile_picture'):
-        profile_picture = request.FILES['profile_picture']
-
-        profile.profile_picture = profile_picture
-        profile.save()
-
-        return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
-
-    return render(request, '_patron_dashboard.html', {'profile': profile})
+# def patron_dashboard_view(request):
+#     profile = Profile.objects.get(user=request.user)
+#
+#     if request.method == 'POST' and request.FILES.get('profile_picture'):
+#         profile_picture = request.FILES['profile_picture']
+#
+#         profile.profile_picture = profile_picture
+#         profile.save()
+#
+#         return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
+#
+#     return render(request, '_patron_dashboard.html', {'profile': profile})
 
 
 def profile(request):
-    return render(request, 'profile.html')
+    return render(request, 'base/profile.html')
 
 
 def setting(request):
-    return render(request, 'setting.html')
+    return render(request, 'base/setting.html')
 
 
 @login_required
@@ -236,7 +236,7 @@ def view_cart(request):
     # Retrieve actual Item objects from the IDs
     items = Item.objects.filter(id__in=cart)
 
-    return render(request, 'cart.html', {'items': items})
+    return render(request, 'cart/cart.html', {'items': items})
 
 
 @login_required
@@ -255,16 +255,7 @@ def checkout(request):
     # Clear the cart after processing
     request.session['cart'] = []
 
-    return render(request, 'checkout.html', {'items': items})
-
-
-def profile(request):
-    return render(request, 'profile.html')
-
-
-def setting(request):
-    return render(request, 'setting.html')
-
+    return render(request, 'cart/checkout.html', {'items': items})
 
 def upload_xlsx(request):
     if request.method == 'POST' and request.FILES.get('xlsx_file'):
@@ -274,7 +265,7 @@ def upload_xlsx(request):
             ws = wb.active
         except Exception as e:
             messages.error(request, f"Error reading XLSX file: {e}")
-            return render(request, 'upload_xlsx.html')
+            return render(request, 'base/upload.html')
 
         # Read the first row as headers
         headers = []
@@ -342,4 +333,4 @@ def upload_xlsx(request):
 
         messages.success(request, "XLSX data uploaded successfully!")
         return redirect('items_list')  # Adjust the redirect URL name as needed
-    return render(request, 'upload.html')
+    return render(request, 'base/upload.html')
