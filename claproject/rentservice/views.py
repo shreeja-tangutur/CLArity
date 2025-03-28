@@ -180,6 +180,12 @@ def patron_dashboard_view(request):
 
     return render(request, '_patron_dashboard.html', {'profile': profile})
 
+def profile(request):
+    return render(request, 'profile.html')
+
+def setting(request):
+    return render(request, 'setting.html')
+
 @login_required
 def add_to_cart(request, item_id):
     """
