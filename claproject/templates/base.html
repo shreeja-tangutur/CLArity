@@ -21,14 +21,37 @@
           <button class="btn btn-outline-light ms-2" type="submit">Search</button>
         </form>
 
-        <!-- Right side: User Info, Cart Icon, and Sign In/Out -->
+        <!-- Right side: User Info, Profile Picture, Cart, Sign Out, and Menu Dropdown -->
         <div class="d-flex align-items-center">
           {% if request.user.is_authenticated %}
-              <span class="navbar-text me-3">Welcome, {{ request.user.first_name }}!</span>
-              <a href="{% url 'cart' %}" class="btn btn-outline-light me-3">
+              <span class="navbar-text me-2">Welcome, {{ request.user.first_name }}!</span>
+
+              <!-- Small Profile Picture -->
+              {% if request.user.profile.profile_picture %}
+                <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.first_name }}" class="rounded-circle me-3" style="width:30px; height:30px;">
+              {% else %}
+                <i class="bi bi-person-circle me-3" style="font-size: 1.5rem;"></i>
+              {% endif %}
+
+              <!-- Cart Icon -->
+              <a href="{% url 'cart' %}" class="btn btn-outline-light me-2">
                   <i class="bi bi-cart"></i>
               </a>
-              <a href="{% url 'sign_out' %}" class="btn btn-outline-light">Sign Out</a>
+
+              <!-- Sign Out Button -->
+              <a href="{% url 'sign_out' %}" class="btn btn-outline-light me-2">Sign Out</a>
+
+              <!-- Dropdown Menu -->
+              <div class="dropdown">
+                <button class="btn btn-outline-light dropdown-toggle" type="button" id="navbarDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                  Menu
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuButton">
+                  <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                  <li><a class="dropdown-item" href="{% url 'settings' %}">Settings</a></li>
+                  <li><a class="dropdown-item" href="{% url 'help' %}">Help</a></li>
+                </ul>
+              </div>
           {% else %}
               <a href="{% url 'sign_in' %}" class="btn btn-outline-light">Sign In</a>
           {% endif %}
@@ -50,6 +73,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 
 
