@@ -25,7 +25,6 @@
           <button class="btn btn-outline-light ms-2" type="submit">Search</button>
         </form>
 
-        <!-- Right side: User Info, Profile, Picture, Cart Icon, Sign Out, and Menu -->
         <!-- Right side: User Info, Profile Picture, Cart Icon, Sign Out, and Menu -->
 <div class="d-flex align-items-center">
   {% if request.user.is_authenticated %}
@@ -34,7 +33,7 @@
       {% if request.user.profile.profile_picture %}
           <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.first_name }}" class="rounded-circle me-2" style="width:30px; height:30px;">
       {% else %}
-          <i class="bi bi-person-circle me-2" style="font-size: 1.5rem;"></i>
+          <i class="bi bi-person-circle me-3" style="font-size: 1.5rem;"></i>
       {% endif %}
 
       <a href="{% url 'cart' %}" class="btn btn-outline-light me-2">
