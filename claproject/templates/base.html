@@ -15,12 +15,11 @@
         <!-- Left side: Brand always points to unified dashboard -->
         <a class="navbar-brand" href="{% url 'dashboard' %}">Renting App</a>
 
-          <!-- Center: Search Form -->
-        <form class="d-flex mx-auto" action="{% url 'search_items' %}" method="get">
-        <input class="form-control" type="text" name="q" placeholder="Search..." aria-label="Search" style="width: 400px;">
-        <button class="btn btn-outline-light ms-2" type="submit">Search</button>
+        <form action="{% url 'search_items' %}" method="get" style="position: relative; width: 400px; margin: auto;">
+            <input class="form-control" type="text" name="q" placeholder="Search..." aria-label="Search" style="width: 100%;">
+            <button class="btn btn-outline-light" type="submit" style="position: absolute; right: -110px; top: 0;">Search</button>
         </form>
-
+          
         <!-- Right side: User Info, Profile Picture, Cart, Sign Out, and Menu Dropdown -->
         <div class="d-flex align-items-center">
           {% if request.user.is_authenticated %}
