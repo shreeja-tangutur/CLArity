@@ -93,7 +93,6 @@ def anonymous_home(request):
         "items": visible_to_user
     })
 
-
 def sign_out(request):
     logout(request)
     return redirect('dashboard')
@@ -103,11 +102,9 @@ def items_list(request):
     items = Item.objects.filter(deleted=False)
     return render(request, 'search/items_list.html', {'items': items})
 
-
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
     return render(request, "collections/item_detail.html", {"item": item})
-
 
 def collection_detail(request, collection_slug):
     collections = {
@@ -173,7 +170,6 @@ def search_items(request):
         'results': results
     })
 
-
 # def patron_dashboard_view(request):
 #     profile = Profile.objects.get(user=request.user)
 #
@@ -191,10 +187,8 @@ def search_items(request):
 def profile(request):
     return render(request, 'base/profile.html')
 
-
 def setting(request):
     return render(request, 'base/setting.html')
-
 
 @login_required
 def add_to_cart(request, item_id):
@@ -324,7 +318,6 @@ def upload_xlsx(request):
                 if collections_str:
                     collection_names = [name.strip() for name in collections_str.split(",") if name.strip()]
                     for col_name in collection_names:
-                        # Assuming your Collection model uses 'title' for the collection name
                         collection_obj, _ = Collection.objects.get_or_create(title=col_name)
                         item.collections.add(collection_obj)
             except Exception as e:
@@ -332,5 +325,5 @@ def upload_xlsx(request):
                 continue
 
         messages.success(request, "XLSX data uploaded successfully!")
-        return redirect('items_list')  # Adjust the redirect URL name as needed
+        return redirect('items_list')
     return render(request, 'base/upload.html')
