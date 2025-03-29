@@ -10,22 +10,19 @@ from typing import List
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
-
+    
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('patron', 'Patron'),
         ('librarian', 'Librarian'),
-        # Anonymous user is not stored inside the database
     ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patron')
-    google_account = models.EmailField(unique=True)  # Have to implement Google API
     joined_date = models.DateTimeField(auto_now_add=True)
 
-    groups = models.ManyToManyField(Group, related_name="rentservice_user_set", blank=True)
-    user_permissions = models.ManyToManyField(Permission, related_name="rentservice_user_permissions_set", blank=True)
-
     def is_librarian(self):
-        return self.role == 'librarian'
+        # Check if the user is in the "Librarian" group.
+        return self.groups.filter(name='Librarian').exists()
+
 
 class DjangoAdministrator(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

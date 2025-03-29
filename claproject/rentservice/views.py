@@ -4,66 +4,41 @@ import slugify
 import openpyxl
 
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from django.contrib import messages
-from django.contrib.auth import login, logout
-from django.contrib.auth.models import Group
 from .models import Profile, User, Item
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
+from allauth.account.views import LogoutView
 
 from .models import Item, Collection
 
+def google_login_callback(request):
+    # Assuming user has been authenticated via Google
+    user = request.user  # Get the logged-in user
 
-@csrf_exempt
-def sign_in(request):
-    if request.user.is_authenticated:
-        if request.user.groups.filter(name="Librarian").exists():
-            user_group = "Librarian"
-        else:
-            user_group = "Patron"
+    # Check if the user already exists and has a role
+    if not hasattr(user, 'role') or not user.role:
+        # Assign 'patron' role by default if not set
+        user.role = 'patron'
+        user.save()
 
-        request.session['user_group'] = user_group
-        return redirect('dashboard')
-
-    return render(request, 'registration/sign_in.html')
-
-
-@csrf_exempt
-def auth_receiver(request):
-    token = request.POST.get('credential')
-    if not token:
-        return HttpResponse("No token provided", status=400)
-    try:
-        user_data = id_token.verify_oauth2_token(
-            token, requests.Request(), os.environ['GOOGLE_OAUTH_CLIENT_ID']
-        )
-    except ValueError:
-        return HttpResponse("Invalid token", status=403)
-
-    email = user_data.get("email")
-    name = user_data.get("name")
-
-    user, created = User.objects.get_or_create(username=email, defaults={"email": email, "first_name": name})
-    # user is patron by default
-    if created:
+    # Assign the user to the correct group based on their role
+    if user.role == 'librarian':
+        librarian_group, _ = Group.objects.get_or_create(name="Librarian")
+        user.groups.add(librarian_group)
+    else:
         patron_group, _ = Group.objects.get_or_create(name="Patron")
         user.groups.add(patron_group)
 
     login(request, user)
 
-    if user.groups.filter(name="Librarian").exists():
-        user_type = "librarian"
-    else:
-        user_type = "patron"
-    request.session['user_type'] = user_type
-
+    # Redirect to the dashboard
     return redirect('dashboard')
 
-
+@login_required
 def dashboard(request):
     if request.user.is_authenticated:
         if request.user.groups.filter(name="Librarian").exists():
@@ -94,8 +69,7 @@ def anonymous_home(request):
     })
 
 def sign_out(request):
-    logout(request)
-    return redirect('dashboard')
+    return LogoutView.as_view()(request)
 
 
 def items_list(request):

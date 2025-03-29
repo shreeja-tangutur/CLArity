@@ -21,15 +21,6 @@ from decouple import config
 
 load_dotenv()
 
-GOOGLE_OAUTH_CLIENT_ID = os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
-if not GOOGLE_OAUTH_CLIENT_ID:
-    raise ValueError(
-        'GOOGLE_OAUTH_CLIENT_ID is missing.'
-    )
-
-SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
-SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -50,6 +41,10 @@ ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com', 's
 
 
 # Application definition
+SITE_ID = 1
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,6 +53,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required for allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'claproject.rentservice.apps.RentserviceConfig',
     'storages',
 ]
@@ -71,6 +71,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -170,7 +171,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 
 
@@ -189,9 +190,33 @@ try:
 except ImportError:
     found = False
 
-AUTH_USER_MODEL = 'rentservice.User'
-BASE_DIR = Path(__file__).resolve().parent.parent
-STATIC_URL = "/static/"
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "APP": {
+            "client_id": os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
+            "secret": os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+        },
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
+
+
+#AUTH_USER_MODEL = 'rentservice.User'
+#BASE_DIR = Path(__file__).resolve().parent.parent
+#STATIC_URL = "/static/"
 # USE_S3 = os.getenv("USE_S3", "FALSE").strip().upper() == "TRUE"
 
 # if USE_S3:

@@ -1,0 +1,20 @@
+{% load socialaccount %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Sign In</h2>
+    <div class="d-flex justify-content-center">
+        <!-- Google Sign-In Button -->
+        <a href="{% provider_login_url 'google' %}" class="btn btn-danger btn-block w-50 mb-3">
+            <i class="fab fa-google"></i> Sign in with Google
+        </a>
+    </div>
+    <div class="d-flex justify-content-center">
+        <!-- Anonymous Access Button -->
+        <a href="{% url 'dashboard' %}" class="btn btn-primary btn-block w-50 mb-3">
+            Continue as Guest
+        </a>
+    </div>
+</div>
+
+{% endblock %}

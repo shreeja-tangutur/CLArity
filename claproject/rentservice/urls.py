@@ -1,12 +1,11 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
     # Log-in
+    path('accounts/', include('allauth.urls')),
     path('', views.dashboard, name='dashboard'),
-    path('sign-in/', views.sign_in, name='sign_in'),
     path('sign-out/', views.sign_out, name='sign_out'),
-    path('auth-receiver/', views.auth_receiver, name='auth_receiver'),
 
     # Cart
     path('cart/', views.view_cart, name='cart'),
