@@ -22,7 +22,6 @@
 
         <!-- Right side: User Info, Profile Picture, Cart, Sign Out, and Menu Dropdown -->
         <div class="d-flex align-items-center">
-          {% if request.user.is_authenticated %}
               <span class="navbar-text me-2">Welcome, {{ request.user.first_name }}!</span>
 
               <!-- Small Profile Picture -->
@@ -50,9 +49,6 @@
                   <li><a class="dropdown-item" href="{% url 'setting' %}">Settings</a></li>
                 </ul>
               </div>
-          {% else %}
-              <a href="{% url 'sign_in' %}" class="btn btn-outline-light">Sign In</a>
-          {% endif %}
         </div>
       </div>
     </nav>

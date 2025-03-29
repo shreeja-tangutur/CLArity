@@ -5,6 +5,7 @@ urlpatterns = [
     # Log-in
     path('accounts/', include('allauth.urls')),
     path('', views.dashboard, name='dashboard'),
+    path('anonymous-home/', views.anonymous_home, name='anonymous_home'),
     path('sign-out/', views.sign_out, name='sign_out'),
 
     # Cart

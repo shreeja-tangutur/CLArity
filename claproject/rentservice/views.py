@@ -50,12 +50,7 @@ def dashboard(request):
         user_type = "anonymous"
         profile = None
 
-    context = {
-        'user_type': user_type,
-        'profile': profile,
-    }
-    return render(request, 'dashboard/dashboard.html', context)
-
+    return render(request, 'dashboard/dashboard.html', {'user_type': user_type})
 
 def anonymous_home(request):
     public_collections = Collection.objects.filter(is_public=True)
