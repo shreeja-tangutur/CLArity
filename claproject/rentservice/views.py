@@ -40,17 +40,26 @@ def google_login_callback(request):
 
 @login_required
 def dashboard(request):
-    if request.user.is_authenticated:
-        if request.user.groups.filter(name="Librarian").exists():
-            user_type = "librarian"
-        else:
-            user_type = "patron"
-        profile = request.user.profile
-    else:
-        user_type = "anonymous"
-        profile = None
+    profile = Profile.objects.get(user=request.user)
 
-    return render(request, 'dashboard/dashboard.html', {'user_type': user_type})
+    if request.method == 'POST' and 'profile_picture' in request.FILES:
+        print("📨 POST form submitted")
+        profile_picture = request.FILES['profile_picture']
+        print(f"📷 File received: {profile_picture.name}")
+        profile.profile_picture = profile_picture
+        profile.save()
+        print("✅ Profile picture saved!")
+        return redirect('dashboard')
+
+    if request.user.groups.filter(name="Librarian").exists():
+        user_type = "librarian"
+    else:
+        user_type = "patron"
+
+    return render(request, 'dashboard/dashboard.html', {
+        'user_type': user_type,
+        'profile': profile
+    })
 
 def anonymous_home(request):
     public_collections = Collection.objects.filter(is_public=True)
