@@ -40,7 +40,7 @@ def google_login_callback(request):
 
 @login_required
 def dashboard(request):
-    profile = Profile.objects.get(user=request.user)
+    profile, _ = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST' and 'profile_picture' in request.FILES:
         print("📨 POST form submitted")
@@ -162,8 +162,19 @@ def search_items(request):
 #     return render(request, '_patron_dashboard.html', {'profile': profile})
 
 
+@login_required
 def profile(request):
-    return render(request, 'base/profile.html')
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST' and 'profile_picture' in request.FILES:
+        print("📨 Upload submitted!")
+        profile.profile_picture = request.FILES['profile_picture']
+        profile.save()
+        print("✅ Profile picture updated.")
+        return redirect('profile')
+
+    return render(request, 'base/profile.html', {'profile': profile})
+
 
 def setting(request):
     return render(request, 'base/setting.html')
