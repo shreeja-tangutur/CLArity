@@ -5,6 +5,7 @@ urlpatterns = [
     # Log-in
     path('', views.dashboard, name='dashboard'),
     path('accounts/', include('allauth.urls')),
+    path('login/', views.login_view, name='login'),
     path('sign-out/', views.sign_out, name='sign_out'),
 
     # Cart
@@ -31,6 +32,4 @@ urlpatterns = [
     path('collections/create/', views.create_collection, name='create_collection'),
     path('collections/<int:pk>/edit/', views.edit_collection, name='edit_collection'),
     path('collections/<int:pk>/delete/', views.delete_collection, name='delete_collection'),
-
-
 ]
