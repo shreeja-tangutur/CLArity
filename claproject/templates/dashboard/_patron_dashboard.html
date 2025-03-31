@@ -1,14 +1,23 @@
-<h1 class="text-center mb-4">Explore Our Collections</h1>
+{% load static %}
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+<div class="text-center">
+    <h1>Explore Our Collections</h1>
+</div>
 
 <div class="row">
     {% for collection in collections %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <img src="https://via.placeholder.com/400x250?text={{ collection.name|urlencode }}" class="card-img-top" alt="{{ collection.name }}">
+                <img src="https://via.placeholder.com/400x250?text={{ collection.title|urlencode }}" class="card-img-top" alt="{{ collection.title }}">
                 <div class="card-body">
-                    <h5 class="card-title">{{ collection.name }}</h5>
+                    <h5 class="card-title">{{ collection.title }}</h5>
                     <p class="card-text">{{ collection.description|default:"No description available." }}</p>
-                    <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-primary"></a>
+                    <a href="{% url 'collection_detail' collection_title=collection.title|urlencode %}" class="btn btn-primary">
+                        View {{ collection.title }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -18,7 +27,7 @@
 </div>
 
 <div class="text-center mt-5">
-    <h2>Browse Available Items</h2>
+    <h2>Or browse individual items</h2>
 </div>
 
 <div class="row">
@@ -41,8 +50,4 @@
         <p class="text-muted">No items available to show.</p>
     {% endfor %}
 </div>
-
-<div class="text-center mt-5">
-    <a href="{% url 'upload_xlsx' %}" class="btn btn-success btn-lg">Upload Items via XLSX</a>
-</div>
-
+{% endblock content %}

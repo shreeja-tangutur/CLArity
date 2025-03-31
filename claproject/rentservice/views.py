@@ -38,24 +38,32 @@ def google_login_callback(request):
     # Redirect to the dashboard
     return redirect('dashboard')
 
-@login_required
+# @login_required
 def dashboard(request):
-    profile, _ = Profile.objects.get_or_create(user=request.user)
+    profile = None
 
-    if request.method == 'POST' and 'profile_picture' in request.FILES:
-        print("📨 POST form submitted")
-        profile_picture = request.FILES['profile_picture']
-        print(f"📷 File received: {profile_picture.name}")
-        profile.profile_picture = profile_picture
-        profile.save()
-        print("✅ Profile picture saved!")
-        return redirect('dashboard')
+    if request.user.is_authenticated:
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+
+        if request.method == 'POST' and 'profile_picture' in request.FILES:
+            print("📨 POST form submitted")
+            profile_picture = request.FILES['profile_picture']
+            print(f"📷 File received: {profile_picture.name}")
+            profile.profile_picture = profile_picture
+            profile.save()
+            print("✅ Profile picture saved!")
+            return redirect('dashboard')
+
+        user_type = request.user.role
+    else:
+        user_type = "anonymous"
 
     return render(request, 'dashboard/dashboard.html', {
-        'user_type': request.user.role,
+        'user_type': user_type,
         'profile': profile,
         'visible_item': get_visible_items_for_user(request.user),
     })
+
 
 def get_visible_items_for_user(user):
     public_collections = Collection.objects.filter(is_public=True)
