@@ -241,6 +241,6 @@ MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/"
 #     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 AUTH_USER_MODEL = 'rentservice.User'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 
 
