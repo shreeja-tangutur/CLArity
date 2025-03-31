@@ -118,6 +118,7 @@ class Library(models.Model):
     collections = models.ManyToManyField(Collection, blank=True)
     items = models.ManyToManyField(Item, blank=True)
 
+
 class BorrowRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),

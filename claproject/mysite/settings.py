@@ -242,3 +242,5 @@ MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/media/"
 
 AUTH_USER_MODEL = 'rentservice.User'
 ACCOUNT_EMAIL_REQUIRED = True
+
+
