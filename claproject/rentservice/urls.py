@@ -15,7 +15,7 @@ urlpatterns = [
 
     # Search & Result
     path('search/', views.search_items, name='search_items'),
-    path('collection/<slug:collection_slug>/', views.collection_detail, name='collection_detail'),
+    path('collection/<str:collection_title>/', views.collection_detail, name='collection_detail'),
     path('search/<slug:search_slug>/', views.search_items, name='search_results'),
     path('item/<str:identifier>/', views.item_detail, name='item_detail'),
 

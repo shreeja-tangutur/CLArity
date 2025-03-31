@@ -101,20 +101,6 @@ class Collection(models.Model):
     is_public = models.BooleanField(default=True)
     private_users = models.ManyToManyField(User, blank=True, related_name='private_collections')
 
-    def can_user_access(self, user):
-        """
-        Determines if a given user can access this collection.
-        - Librarians can always access collections.
-        - Patrons can access public collections.
-        - Patrons need to be in `private_users` for private collections.
-        """
-        if user.is_librarian():
-            return True
-        if self.is_public:
-            return True
-        return self.private_users.filter(id=user.id).exists()
-
-
 class Library(models.Model):
     name = models.CharField(max_length=255, unique=True)
     collections = models.ManyToManyField(Collection, blank=True)

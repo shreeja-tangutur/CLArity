@@ -92,7 +92,7 @@ def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
     return render(request, "collections/item_detail.html", {"item": item})
 
-def collection_detail(request, collection_slug):
+def collection_detail(request, collection_title):
     collections = {
         'textbooks': {
             'title': 'Textbooks',
@@ -111,7 +111,7 @@ def collection_detail(request, collection_slug):
         },
     }
 
-    collection = collections.get(collection_slug)
+    collection = collections.get_object_or_404(Collection, title=collection_title)
     if not collection:
         return render(request, '404.html', status=404)
 
@@ -120,29 +120,9 @@ def collection_detail(request, collection_slug):
     return render(request, 'collections/collection_detail.html', {
         'collection': collection,
         'items': items,
-        'slug': collection_slug
+        'title': collection_title
     })
 
-
-# def patron_dashboard_view(request):
-#     profile = Profile.objects.get(user=request.user)
-#
-#     if request.method == 'POST':
-#         print("📢 Form submitted!")  # Debugging print
-#
-#         if 'profile_picture' in request.FILES:
-#             profile_picture = request.FILES['profile_picture']
-#             print(f"📢 Received file: {profile_picture.name}")  # Debugging print
-#
-#             profile.profile_picture = profile_picture
-#             profile.save()
-#
-#             print("✅ Profile picture updated!")
-#             return redirect('patron_dashboard')
-#         else:
-#             print("❌ No file received in request.FILES!")
-#
-#     return render(request, '_patron_dashboard.html', {'profile': profile})
 
 @csrf_exempt
 def search_items(request):
@@ -155,19 +135,6 @@ def search_items(request):
         'query': query,
         'results': results
     })
-
-# def patron_dashboard_view(request):
-#     profile = Profile.objects.get(user=request.user)
-#
-#     if request.method == 'POST' and request.FILES.get('profile_picture'):
-#         profile_picture = request.FILES['profile_picture']
-#
-#         profile.profile_picture = profile_picture
-#         profile.save()
-#
-#         return redirect('patron_dashboard')  # Redirect to the dashboard to see the updated picture
-#
-#     return render(request, '_patron_dashboard.html', {'profile': profile})
 
 
 @login_required
