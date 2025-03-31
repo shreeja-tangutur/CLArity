@@ -2,7 +2,16 @@
   <hr>
   <h2 class="text-center">Librarian Tools</h2>
   <div class="text-center">
-    <a href="{% url 'add_collection' %}" class="btn btn-info">Add Collection</a>
-    <!-- Add more librarian-specific functionalities as needed -->
+    <div class="text-center">
+      <!-- Create Item Button -->
+      <a href="{% url 'create_item' %}" class="btn btn-success">Create Item</a>
+    
+      <!-- Create Collection Button -->
+      <a href="{% url 'create_collection' %}" class="btn btn-info">Create Collection</a>
+    
+      <!-- XLSX upload if you still want it -->
+      <a href="{% url 'upload_xlsx' %}" class="btn btn-secondary">Upload Items via XLSX</a>
+          
+    </div>    
   </div>
 </div>
