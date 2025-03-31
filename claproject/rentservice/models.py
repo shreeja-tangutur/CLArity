@@ -99,7 +99,19 @@ class Collection(models.Model):
     description = models.TextField()
     items = models.ManyToManyField(Item, blank=True)
     is_public = models.BooleanField(default=True)
+    creator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='collections',
+        null=True, 
+        blank=True
+    )
+    
     private_users = models.ManyToManyField(User, blank=True, related_name='private_collections')
+
+    def __str__(self):
+        return self.title
+
 
 class Library(models.Model):
     name = models.CharField(max_length=255, unique=True)

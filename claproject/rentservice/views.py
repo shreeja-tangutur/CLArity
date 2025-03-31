@@ -12,6 +12,8 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from allauth.account.views import LogoutView
+from .forms import CollectionForm
+from .forms import ItemForm
 
 from .models import Item, Collection
 
@@ -101,35 +103,15 @@ def item_detail(request, identifier):
     return render(request, "collections/item_detail.html", {"item": item})
 
 def collection_detail(request, collection_title):
-    collections = {
-        'textbooks': {
-            'title': 'Textbooks',
-            'description': 'Browse through a wide range of textbooks available for rent, covering all subjects and majors.',
-            'image': 'images/textbook.jpg',
-        },
-        'calculators': {
-            'title': 'Calculators',
-            'description': 'Need a calculator for your exams or projects? Check out our collection of scientific and graphing calculators.',
-            'image': 'images/calculator.jpg',
-        },
-        'chargers': {
-            'title': 'Chargers',
-            'description': 'Find any charger from phone chargers to laptop chargers.',
-            'image': 'images/charger.jpg',
-        },
-    }
-
-    collection = collections.get_object_or_404(Collection, title=collection_title)
-    if not collection:
-        return render(request, '404.html', status=404)
-
-    items = Item.objects.filter(collections__title__iexact=collection['title'])
-
+    # This fetches the Collection object by title from the database
+    collection = get_object_or_404(Collection, title=collection_title)
+    items = collection.items.all()
     return render(request, 'collections/collection_detail.html', {
         'collection': collection,
-        'items': items,
-        'title': collection_title
+        'items': items
     })
+
+
 
 
 @csrf_exempt
@@ -163,23 +145,107 @@ def setting(request):
     return render(request, 'base/setting.html')
 
 @login_required
+def create_item(request):
+    if not request.user.is_librarian():
+        messages.error(request, "Only librarians can add new items.")
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = ItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            item = form.save()  # Save the new item to the database
+            messages.success(request, "Item created successfully!")
+            # Redirect to a detail page or list page for the item
+            return redirect('item_detail', identifier=item.identifier)
+    else:
+        form = ItemForm()
+    
+    return render(request, 'items/create_item.html', {'form': form})
+
+@login_required
+def create_collection(request):
+    if request.method == 'POST':
+        form = CollectionForm(request.POST, user=request.user)
+        if form.is_valid():
+            collection = form.save(commit=False)
+            
+            if not request.user.is_librarian():
+                collection.is_public = True
+
+            collection.save()
+            form.save_m2m()  
+            messages.success(request, "Collection created successfully!")
+            return redirect('collection_detail', collection_title=collection.title)
+    else:
+        form = CollectionForm(user=request.user)
+    
+    return render(request, 'collections/create_collection.html', {'form': form})
+
+@login_required
+def edit_collection(request, pk):
+    # pk is the primary key of the Collection
+    collection = get_object_or_404(Collection, pk=pk)
+
+    # Optionally, only allow the creator or any librarian to edit
+    if not request.user.is_librarian() and request.user != collection.creator:
+        messages.error(request, "You do not have permission to edit this collection.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = CollectionForm(request.POST, user=request.user, instance=collection)
+        if form.is_valid():
+            updated_collection = form.save(commit=False)
+            
+            # Patron cannot make a collection private
+            if request.user.is_patron():
+                updated_collection.is_public = True
+
+            updated_collection.save()
+            form.save_m2m()
+            messages.success(request, "Collection updated successfully!")
+            return redirect('collection_detail', collection_title=updated_collection.title)
+    else:
+        form = CollectionForm(user=request.user, instance=collection)
+
+    return render(request, 'collections/edit_collection.html', {
+        'form': form,
+        'collection': collection
+    })
+
+@login_required
+def delete_collection(request, pk):
+    collection = get_object_or_404(Collection, pk=pk)
+
+    # Optionally, only the librarian or the collection creator can delete
+    if not request.user.is_librarian() and request.user != collection.creator:
+        messages.error(request, "You do not have permission to delete this collection.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        collection.delete()
+        messages.success(request, "Collection deleted successfully!")
+        return redirect('dashboard')
+
+    return render(request, 'collections/confirm_delete_collection.html', {
+        'collection': collection
+    })
+
+
+@login_required
 def add_to_cart(request, item_id):
     """
     Adds the specified Item to the user's session-based cart.
     """
     item = get_object_or_404(Item, id=item_id)
 
-    # Get current cart from session; if none, create empty list
     cart = request.session.get('cart', [])
 
-    # Convert IDs to strings if you prefer
-    # If you only want to store unique items, check first
+    
     if item_id not in cart:
         cart.append(item_id)
 
     request.session['cart'] = cart
-    return redirect('cart')  # or wherever you want to go after adding
-
+    return redirect('cart')  
 
 @login_required
 def remove_from_cart(request, item_id):

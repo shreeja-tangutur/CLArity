@@ -26,4 +26,11 @@ urlpatterns = [
     # Menu
     path('profile/', views.profile, name='profile'),
     path('settings/', views.setting, name='setting'),
+
+    path('items/create/', views.create_item, name='create_item'),
+    path('collections/create/', views.create_collection, name='create_collection'),
+    path('collections/<int:pk>/edit/', views.edit_collection, name='edit_collection'),
+    path('collections/<int:pk>/delete/', views.delete_collection, name='delete_collection'),
+
+
 ]
