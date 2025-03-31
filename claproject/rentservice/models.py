@@ -58,6 +58,8 @@ class Item(models.Model):
     collections = models.ManyToManyField('Collection', blank=True)
     deleted = models.BooleanField(default=False)
     condition = models.IntegerField(default=10, validators=[MinValueValidator(1), MaxValueValidator(10)])
+    comment = models.TextField()
+
 
     def mark_as_available(self):
         self.status = 'available'
