@@ -20,8 +20,10 @@ class User(AbstractUser):
     joined_date = models.DateTimeField(auto_now_add=True)
 
     def is_librarian(self):
-        # Check if the user is in the "Librarian" group.
-        return self.groups.filter(name='Librarian').exists()
+        return self.role == 'librarian'
+
+    def is_patron(self):
+        return self.role == 'patron'
 
 
 class DjangoAdministrator(models.Model):
