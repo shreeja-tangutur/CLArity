@@ -1,3 +1,53 @@
+<!--{% extends 'base/base.html' %}-->
+<!--{% load static %}-->
+
+<!--{% block title %}Dashboard{% endblock title %}-->
+
+<!--{% block content %}-->
+<!--<div class="text-center">-->
+<!--    <h1>Explore Our Collections</h1>-->
+<!--</div>-->
+
+<!--<div class="row">-->
+<!--    &lt;!&ndash; Textbooks Collection &ndash;&gt;-->
+<!--    <div class="col-md-4">-->
+<!--        <div class="card h-100">-->
+<!--            <img src="https://via.placeholder.com/400x250?text=Textbooks" class="card-img-top" alt="Textbooks">-->
+<!--            <div class="card-body">-->
+<!--                <h5 class="card-title">Textbooks</h5>-->
+<!--                <p class="card-text">Browse through a wide range of textbooks available for rent, covering all subjects and majors.</p>-->
+<!--                <a href="{% url 'collection_detail' collection_slug='textbooks' %}" class="btn btn-primary">View Textbooks</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Calculators Collection &ndash;&gt;-->
+<!--    <div class="col-md-4">-->
+<!--        <div class="card h-100">-->
+<!--            <img src="https://via.placeholder.com/400x250?text=Calculators" class="card-img-top" alt="Calculators">-->
+<!--            <div class="card-body">-->
+<!--                <h5 class="card-title">Calculators</h5>-->
+<!--                <p class="card-text">Check out our collection of scientific and graphing calculators.</p>-->
+<!--                <a href="{% url 'collection_detail' collection_slug='calculators' %}" class="btn btn-primary">View Calculators</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; Chargers Collection &ndash;&gt;-->
+<!--    <div class="col-md-4">-->
+<!--        <div class="card h-100">-->
+<!--            <img src="https://via.placeholder.com/400x250?text=Chargers" class="card-img-top" alt="Chargers">-->
+<!--            <div class="card-body">-->
+<!--                <h5 class="card-title">Chargers</h5>-->
+<!--                <p class="card-text">Find chargers from phone to laptop varieties.</p>-->
+<!--                <a href="{% url 'collection_detail' collection_slug='chargers' %}" class="btn btn-primary">View Chargers</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--{% endblock content %}-->
+
 {% extends 'base/base.html' %}
 {% load static %}
 
@@ -9,41 +59,40 @@
 </div>
 
 <div class="row">
-    <!-- Textbooks Collection -->
-    <div class="col-md-4">
-        <div class="card h-100">
-            <img src="https://via.placeholder.com/400x250?text=Textbooks" class="card-img-top" alt="Textbooks">
-            <div class="card-body">
-                <h5 class="card-title">Textbooks</h5>
-                <p class="card-text">Browse through a wide range of textbooks available for rent, covering all subjects and majors.</p>
-                <a href="{% url 'collection_detail' collection_slug='textbooks' %}" class="btn btn-primary">View Textbooks</a>
+    {% for collection in collections %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="https://via.placeholder.com/400x250?text={{ collection.name|urlencode }}" class="card-img-top" alt="{{ collection.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ collection.name }}</h5>
+                    <p class="card-text">{{ collection.description|default:"No description available." }}</p>
+                    <a href="{% url 'collection_detail' collection_slug=collection.slug %}" class="btn btn-primary">View {{ collection.name }}</a>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Calculators Collection -->
-    <div class="col-md-4">
-        <div class="card h-100">
-            <img src="https://via.placeholder.com/400x250?text=Calculators" class="card-img-top" alt="Calculators">
-            <div class="card-body">
-                <h5 class="card-title">Calculators</h5>
-                <p class="card-text">Check out our collection of scientific and graphing calculators.</p>
-                <a href="{% url 'collection_detail' collection_slug='calculators' %}" class="btn btn-primary">View Calculators</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chargers Collection -->
-    <div class="col-md-4">
-        <div class="card h-100">
-            <img src="https://via.placeholder.com/400x250?text=Chargers" class="card-img-top" alt="Chargers">
-            <div class="card-body">
-                <h5 class="card-title">Chargers</h5>
-                <p class="card-text">Find chargers from phone to laptop varieties.</p>
-                <a href="{% url 'collection_detail' collection_slug='chargers' %}" class="btn btn-primary">View Chargers</a>
-            </div>
-        </div>
-    </div>
+    {% empty %}
+        <p class="text-muted">No collections to display.</p>
+    {% endfor %}
 </div>
 
+<div class="text-center mt-5">
+    <h2>Or browse individual items</h2>
+</div>
+
+<div class="row">
+    {% for item in items %}
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <img src="{{ item.image.url if item.image else 'https://via.placeholder.com/300x200?text=Item' }}" class="card-img-top" alt="{{ item.name }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p class="card-text">{{ item.description|truncatewords:15 }}</p>
+                    <a href="{% url 'item_detail' item.id %}" class="btn btn-outline-primary">View Item</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No items available to show.</p>
+    {% endfor %}
+</div>
 {% endblock content %}

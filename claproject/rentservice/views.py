@@ -8,7 +8,7 @@ from django.contrib import messages
 from .models import Profile, User, Item
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from allauth.account.views import LogoutView
@@ -51,30 +51,38 @@ def dashboard(request):
         print("✅ Profile picture saved!")
         return redirect('dashboard')
 
-    if request.user.groups.filter(name="Librarian").exists():
-        user_type = "librarian"
-    else:
-        user_type = "patron"
-
     return render(request, 'dashboard/dashboard.html', {
-        'user_type': user_type,
-        'profile': profile
+        'user_type': request.user.role,
+        'profile': profile,
+        'visible_item': get_visible_items_for_user(request.user),
     })
 
-def anonymous_home(request):
+def get_visible_items_for_user(user):
     public_collections = Collection.objects.filter(is_public=True)
+    private_collections = Collection.objects.filter(is_public=False)
     items_not_in_any_collection = Item.objects.filter(collections=None)
     items_in_public_collection = Item.objects.filter(collections__in=public_collections)
 
-    visible_to_user = (items_not_in_any_collection | items_in_public_collection).distinct()
-    return render(request, "base/anonymous_home.html", {
-        "collections": public_collections,
-        "items": visible_to_user
-    })
+    visible_collections = public_collections
+    visible_items = (items_not_in_any_collection | items_in_public_collection).distinct()
+
+    if user.is_authenticated and user.role == 'patron':
+        visible_collections = public_collections | private_collections
+        visible_items = (items_not_in_any_collection | items_in_public_collection).distinct()
+
+    elif user.is_authenticated and user.role == 'librarian':
+        visible_collections = Collection.objects.all()
+        visible_items = Item.objects.all()
+
+    return {
+        "collections": visible_collections.distinct(),
+        "items": visible_items.distinct(),
+    }
+
 
 def sign_out(request):
-    return LogoutView.as_view()(request)
-
+    logout(request)
+    return redirect('dashboard')
 
 def items_list(request):
     items = Item.objects.filter(deleted=False)

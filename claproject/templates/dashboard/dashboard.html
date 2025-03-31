@@ -5,18 +5,19 @@
 
 {% block content %}
 <div class="container my-5">
-    {% if user_type == "anonymous" %}
-        {% include 'dashboard/_anonymous_dashboard.html' %}
-    {% elif user_type == "patron" %}
-        {% include 'dashboard/_patron_dashboard.html' %}
-    {% elif user_type == "librarian" %}
-        {% include 'dashboard/_patron_dashboard.html' %}
+    {% if not user.is_authenticated %}
+        {% include 'dashboard/_anonymous_dashboard.html' with collections=visible_item.collections items=visible_item.items %}
+    {% elif user.role == "patron" %}
+        {% include 'dashboard/_patron_dashboard.html' with collections=visible_item.collections items=visible_item.items %}
+    {% elif user.role == "librarian" %}
+        {% include 'dashboard/_patron_dashboard.html' with collections=visible_item.collections items=visible_item.items %}
         {% include 'dashboard/_librarian_dashboard.html' %}
     {% else %}
         <h1>Welcome to Renting App</h1>
     {% endif %}
 </div>
 {% endblock content %}
+
 
 
 
