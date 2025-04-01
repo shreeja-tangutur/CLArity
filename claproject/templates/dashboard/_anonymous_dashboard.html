@@ -41,8 +41,8 @@
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ item.name }}</h5>
-                    <p class="card-text">{{ item.description|truncatewords:15 }}</p>
-                    <a href="{% url 'item_detail' item.id %}" class="btn btn-outline-primary">View Item</a>
+                    <p class="card-text">{{ item.description|truncatewords:15 }}</p><a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
+                    <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
                 </div>
             </div>
         </div>

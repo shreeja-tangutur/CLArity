@@ -16,8 +16,8 @@
         <a class="navbar-brand" href="{% url 'dashboard' %}">Renting App</a>
 
         <!-- Search Form -->
-        <form class="d-flex mx-auto" action="{% url 'search_items' %}" method="get" style="max-width: 400px; width: 100%;">
-            <input class="form-control me-2" type="search" name="q" placeholder="Search..." aria-label="Search">
+        <form action="{% url 'search_items' %}" method="get" class="d-flex" role="search">
+            <input class="form-control me-2" type="search" name="q" placeholder="Search items..." aria-label="Search">
             <button class="btn btn-outline-light" type="submit">Search</button>
         </form>
 

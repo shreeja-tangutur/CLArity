@@ -77,7 +77,7 @@ def dashboard(request):
     return render(request, 'dashboard/dashboard.html', {
         'user_type': user_type,
         'profile': profile,
-        'visible_item': get_visible_items_for_user(request.user),
+        'items': get_visible_items_for_user(request.user),
     })
 
 
@@ -124,9 +124,6 @@ def collection_detail(request, collection_title):
         'collection': collection,
         'items': items
     })
-
-
-
 
 @csrf_exempt
 def search_items(request):
