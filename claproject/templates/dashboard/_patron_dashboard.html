@@ -13,7 +13,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ collection.title }}</h5>
                     <p class="card-text">{{ collection.description|default:"No description available." }}</p>
-                    <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
+                    <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-outline-primary">
                         View {{ collection.title }}
                     </a>
                 </div>
@@ -24,17 +24,24 @@
     {% endfor %}
 </div>
 
+<!-- Upload Button Section -->
+<div class="text-center mt-5 mb-4">
+    <h2>Admin Tools</h2>
+    <a href="{% url 'upload_xlsx' %}" class="btn btn-success">
+        <i class="bi bi-upload"></i> Upload Items via XLSX
+    </a>
+</div>
+
 <div class="text-center mt-5">
     <h2>Or browse individual items</h2>
 </div>
 
-
 <div class="text-center mb-4">
     <a href="{% url 'create_collection' %}" class="btn btn-primary">
-      Create Collection
+        Create Collection
     </a>
-  </div>
-  
+</div>
+
 <div class="row">
     {% for item in items %}
         <div class="col-md-3 mb-4">
@@ -47,7 +54,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ item.name }}</h5>
                     <p class="card-text">{{ item.description|truncatewords:15 }}</p>
-                    <a href="{% url 'item_detail' item.id %}" class="btn btn-outline-primary">View Item</a>
+                    <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
                 </div>
             </div>
         </div>
@@ -56,4 +63,3 @@
     {% endfor %}
 </div>
 {% endblock content %}
-

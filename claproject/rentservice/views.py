@@ -74,35 +74,39 @@ def dashboard(request):
     else:
         user_type = "anonymous"
 
+    data = get_visible_data_for_user(request.user)
+
     return render(request, 'dashboard/dashboard.html', {
         'user_type': user_type,
         'profile': profile,
-        'items': get_visible_items_for_user(request.user),
+        'items': data['items'],
+        'collections': data['collections'],
     })
 
 
-def get_visible_items_for_user(user):
+def get_visible_data_for_user(user):
     public_collections = Collection.objects.filter(is_public=True)
     private_collections = Collection.objects.filter(is_public=False)
+
     items_not_in_any_collection = Item.objects.filter(collections=None)
-    items_in_public_collection = Item.objects.filter(collections__in=public_collections)
+    items_in_public_collections = Item.objects.filter(collections__in=public_collections)
 
-    visible_collections = public_collections
-    visible_items = (items_not_in_any_collection | items_in_public_collection).distinct()
+    if not user.is_authenticated:
+        visible_collections = public_collections
+        visible_items = (items_not_in_any_collection | items_in_public_collections).distinct()
 
-    if user.is_authenticated and user.role == 'patron':
-        visible_collections = public_collections | private_collections
-        visible_items = (items_not_in_any_collection | items_in_public_collection).distinct()
+    elif user.role == 'patron':
+        visible_collections = (public_collections | private_collections).distinct()
+        visible_items = (items_not_in_any_collection | items_in_public_collections).distinct()
 
-    elif user.is_authenticated and user.role == 'librarian':
+    elif user.role == 'librarian':
         visible_collections = Collection.objects.all()
         visible_items = Item.objects.all()
 
     return {
-        "collections": visible_collections.distinct(),
-        "items": visible_items.distinct(),
+        "collections": visible_collections,
+        "items": visible_items
     }
-
 
 def sign_out(request):
     logout(request)
@@ -310,26 +314,27 @@ def upload_xlsx(request):
             messages.error(request, f"Error reading XLSX file: {e}")
             return render(request, 'base/upload.html')
 
-        # Read the first row as headers
-        headers = []
-        for cell in next(ws.iter_rows(min_row=1, max_row=1)):
-            headers.append(str(cell.value).strip() if cell.value else "")
+        headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 
         for row in ws.iter_rows(min_row=2, values_only=True):
             data = dict(zip(headers, row))
-            identifier = data.get("identifier")
+
+            identifier = data.get("identifier", "")
             title = data.get("title", "")
             description = data.get("description", "")
             location = data.get("location", "")
             status = data.get("status", "available")
+
             try:
                 rating = float(data.get("rating", 0))
             except (TypeError, ValueError):
                 rating = 0.0
+
             try:
                 borrow_period_days = int(data.get("borrow_period_days", 30))
             except (TypeError, ValueError):
                 borrow_period_days = 30
+
             try:
                 condition = int(data.get("condition", 10))
             except (TypeError, ValueError):
@@ -352,6 +357,7 @@ def upload_xlsx(request):
                         'condition': condition,
                     }
                 )
+
                 if not created:
                     item.title = title
                     item.description = description
@@ -369,10 +375,12 @@ def upload_xlsx(request):
                     for col_name in collection_names:
                         collection_obj, _ = Collection.objects.get_or_create(title=col_name)
                         item.collections.add(collection_obj)
+
             except Exception as e:
                 messages.error(request, f"Error processing item with identifier {identifier}: {e}")
                 continue
 
         messages.success(request, "XLSX data uploaded successfully!")
         return redirect('items_list')
+
     return render(request, 'base/upload.html')
