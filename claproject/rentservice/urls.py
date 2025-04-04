@@ -31,4 +31,7 @@ urlpatterns = [
     path('collections/create/', views.create_collection, name='create_collection'),
     path('collections/<int:pk>/edit/', views.edit_collection, name='edit_collection'),
     path('collections/<int:pk>/delete/', views.delete_collection, name='delete_collection'),
+
+    path('upgrade-user/<int:user_id>/', views.upgrade_user, name='upgrade_user'),
+
 ]
