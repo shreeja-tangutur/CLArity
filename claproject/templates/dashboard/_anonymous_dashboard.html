@@ -1,7 +1,5 @@
 {% load static %}
 
-{% block title %}Dashboard{% endblock title %}
-
 {% block content %}
 <div class="text-center">
     <h1>Explore Our Collections</h1>
@@ -41,7 +39,7 @@
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ item.name }}</h5>
-                    <p class="card-text">{{ item.description|truncatewords:15 }}</p><a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
+                    <p class="card-text">{{ item.description|truncatewords:15 }}</p>
                     <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
                 </div>
             </div>

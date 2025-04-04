@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, AnonymousUser
 from allauth.account.views import LogoutView
 from .forms import CollectionForm
 from .forms import ItemForm
@@ -54,7 +54,6 @@ def google_login_callback(request):
     # Redirect to the dashboard
     return redirect('dashboard')
 
-# @login_required
 def dashboard(request):
     profile = None
 
@@ -85,6 +84,11 @@ def dashboard(request):
 
 
 def get_visible_data_for_user(user):
+
+    # print("🧪 DEBUG: user =", user)
+    # print("🧪 DEBUG: is_authenticated =", user.is_authenticated)
+    # print("🧪 DEBUG: user.role =", getattr(user, 'role', '❌ No role'))
+
     public_collections = Collection.objects.filter(is_public=True)
     private_collections = Collection.objects.filter(is_public=False)
 
@@ -121,7 +125,6 @@ def item_detail(request, identifier):
     return render(request, "collections/item_detail.html", {"item": item})
 
 def collection_detail(request, collection_title):
-    # This fetches the Collection object by title from the database
     collection = get_object_or_404(Collection, title=collection_title)
     items = collection.items.all()
     return render(request, 'collections/collection_detail.html', {
@@ -384,3 +387,11 @@ def upload_xlsx(request):
         return redirect('items_list')
 
     return render(request, 'base/upload.html')
+
+def main():
+    for result in get_visible_data_for_user(AnonymousUser()):
+        print(result)
+
+
+for result in get_visible_data_for_user(AnonymousUser()):
+    print(result)

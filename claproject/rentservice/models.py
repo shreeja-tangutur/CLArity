@@ -82,6 +82,9 @@ class Item(models.Model):
             self.image.delete(save=False)
         super().delete(*args, **kwargs)
 
+    def __str__(self):
+        return self.title
+
 
 class Comment(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comments")
