@@ -57,7 +57,7 @@ def google_login_callback(request):
 
 def dashboard(request):
     profile = None
-
+    patrons = None
     if request.user.is_authenticated:
         profile, _ = Profile.objects.get_or_create(user=request.user)
 
@@ -152,19 +152,39 @@ def collection_detail(request, collection_title):
 
 @csrf_exempt
 def search_items(request):
+    from django.db.models import Q
+
     query = request.GET.get('q', '').strip()
     item_results = []
     collection_results = []
 
+    # Get visible collections for the user
+    if request.user.is_authenticated:
+        if request.user.is_librarian():
+            visible_collections = Collection.objects.all()
+        else:
+            visible_collections = Collection.objects.filter(
+                Q(is_public=True) | Q(private_users=request.user)
+            ).distinct()
+    else:
+        visible_collections = Collection.objects.filter(is_public=True)
+
     if query:
-        item_results = Item.objects.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query)
+        # Search collections (limit based on access)
+        collection_results = visible_collections.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
         ).distinct()
 
-        collection_results = Collection.objects.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query)
+        # Search items (filter based on visibility)
+        items_in_collections = Item.objects.filter(
+            collections__in=visible_collections
+        )
+        items_without_collections = Item.objects.filter(collections=None)
+
+        visible_items = (items_in_collections | items_without_collections).distinct()
+
+        item_results = visible_items.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
         ).distinct()
 
     return render(request, 'search/search_results.html', {
