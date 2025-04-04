@@ -70,6 +70,9 @@ def dashboard(request):
             return redirect('dashboard')
 
         user_type = request.user.role
+        if request.user.is_librarian():
+            patrons = User.objects.filter(role='patron')
+
     else:
         user_type = "anonymous"
 
@@ -80,6 +83,7 @@ def dashboard(request):
         'profile': profile,
         'items': data['items'],
         'collections': data['collections'],
+        'patrons': patrons
     })
 
 
@@ -111,6 +115,19 @@ def get_visible_data_for_user(user):
         "collections": visible_collections,
         "items": visible_items
     }
+
+@login_required
+def upgrade_user(request, user_id):
+    if not request.user.is_librarian():
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+    user.role = 'librarian'
+    user.save()
+    messages.success(request, f"{user.username} has been upgraded to librarian.")
+    return redirect('dashboard')
+
 
 def sign_out(request):
     logout(request)
@@ -387,6 +404,11 @@ def upload_xlsx(request):
         return redirect('items_list')
 
     return render(request, 'base/upload.html')
+
+
+
+
+
 
 def main():
     for result in get_visible_data_for_user(AnonymousUser()):
