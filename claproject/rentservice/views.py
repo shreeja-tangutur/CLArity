@@ -178,7 +178,7 @@ def create_item(request):
     else:
         form = ItemForm()
     
-    return render(request, 'items/create_item.html', {'form': form})
+    return render(request, 'collections/create_item.html', {'form': form})
 
 @login_required
 def create_collection(request):
