@@ -20,9 +20,9 @@ class ItemForm(forms.ModelForm):
             'location',
             'description',
             'image',
-            'rating',
+            # 'rating',
             'borrow_period_days',
-            'condition',
+            # 'condition',
         ]
 
 class CollectionForm(forms.ModelForm):
