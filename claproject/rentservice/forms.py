@@ -11,19 +11,33 @@ class BorrowRequestForm(forms.ModelForm):
 
 
 class ItemForm(forms.ModelForm):
+    collection = forms.ModelChoiceField(
+        queryset=Collection.objects.all(),
+        required=False,
+        empty_label="No collection",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Item
         fields = [
-            'title', 
+            'title',
             'identifier',
             'status',
             'location',
             'description',
             'image',
-            # 'rating',
             'borrow_period_days',
-            # 'condition',
         ]
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'identifier': forms.TextInput(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'borrow_period_days': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+        }
 
 class CollectionForm(forms.ModelForm):
     items = forms.ModelMultipleChoiceField(
