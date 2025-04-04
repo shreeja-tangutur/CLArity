@@ -15,11 +15,14 @@
         <!-- Brand -->
         <a class="navbar-brand" href="{% url 'dashboard' %}">Renting App</a>
 
+        {% if request.user.is_authenticated %}
         <!-- Search Form -->
-        <form action="{% url 'search_items' %}" method="get" class="d-flex" role="search">
-            <input class="form-control me-2" type="search" name="q" placeholder="Search items..." aria-label="Search">
+        <form action="{% url 'search_items' %}" method="get" class="d-flex me-auto" role="search" style="max-width: 400px;">
+            <input class="form-control me-2" type="search" name="q" placeholder="Search items or collections..." aria-label="Search">
             <button class="btn btn-outline-light" type="submit">Search</button>
         </form>
+        {% endif %}
+
 
         <!-- Right-side -->
         <div class="d-flex align-items-center">
