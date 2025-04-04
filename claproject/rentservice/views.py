@@ -15,6 +15,7 @@ from allauth.account.views import LogoutView
 from .forms import CollectionForm
 from .forms import ItemForm
 from .models import Item, Collection
+from django.db.models import Q
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -151,14 +152,25 @@ def collection_detail(request, collection_title):
 
 @csrf_exempt
 def search_items(request):
-    query = request.GET.get('q', '')
-    results = []
+    query = request.GET.get('q', '').strip()
+    item_results = []
+    collection_results = []
 
     if query:
-        results = Item.objects.filter(title__icontains=query)
+        item_results = Item.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        ).distinct()
+
+        collection_results = Collection.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        ).distinct()
+
     return render(request, 'search/search_results.html', {
         'query': query,
-        'results': results
+        'item_results': item_results,
+        'collection_results': collection_results,
     })
 
 
