@@ -158,34 +158,39 @@ def search_items(request):
     item_results = []
     collection_results = []
 
-    # Get visible collections for the user
     if request.user.is_authenticated:
         if request.user.is_librarian():
             visible_collections = Collection.objects.all()
         else:
-            visible_collections = Collection.objects.filter(
+            visible_collections = Collection.objects.all()
+            visible_item_collections = Collection.objects.filter(
                 Q(is_public=True) | Q(private_users=request.user)
             ).distinct()
     else:
         visible_collections = Collection.objects.filter(is_public=True)
+        visible_item_collections = visible_collections
 
     if query:
-        # Search collections (limit based on access)
         collection_results = visible_collections.filter(
             Q(title__icontains=query) | Q(description__icontains=query)
         ).distinct()
 
-        # Search items (filter based on visibility)
-        items_in_collections = Item.objects.filter(
-            collections__in=visible_collections
-        )
-        items_without_collections = Item.objects.filter(collections=None)
 
-        visible_items = (items_in_collections | items_without_collections).distinct()
+        if request.user.is_authenticated and request.user.is_librarian():
+            item_results = Item.objects.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            ).distinct()
+        else:
+            items_in_visible_collections = Item.objects.filter(
+                collections__in=visible_item_collections
+            )
+            items_without_collections = Item.objects.filter(collections=None)
 
-        item_results = visible_items.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        ).distinct()
+            visible_items = (items_in_visible_collections | items_without_collections).distinct()
+
+            item_results = visible_items.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            ).distinct()
 
     return render(request, 'search/search_results.html', {
         'query': query,
