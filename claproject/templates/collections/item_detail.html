@@ -27,23 +27,30 @@
           <span class="rating">
             {% for i in "12345" %}
               {% if forloop.counter <= item.rating|floatformat:0 %}
-                &#9733;  {# Filled star #}
+                &#9733;
               {% else %}
-                &#9734;  {# Empty star #}
+                &#9734;
               {% endif %}
             {% endfor %}
           </span>
           <small class="ml-2">{{ item.rating }} out of 5</small>
         </div>
 
-        <!-- Other details -->
         <p>{{ item.description }}</p>
         <p><strong>Status:</strong> {{ item.get_status_display }}</p>
         <p><strong>Condition:</strong> {{ item.condition }} / 10</p>
         <p><strong>Location:</strong> {{ item.location }}</p>
         <p><strong>Borrow Period:</strong> {{ item.borrow_period_days }} days</p>
 
-        <button class="borrow-btn">Borrow Now</button>
+        {% if item.status == "available" %}
+        <form method="post" action="{% url 'borrow_request' %}">
+          {% csrf_token %}
+          <input type="hidden" name="item" value="{{ item.id }}">
+          <button type="submit" class="borrow-btn">Borrow Request</button>
+        </form>
+        {% else %}
+        <button class="borrow-btn" disabled>Not Available</button>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -78,11 +85,4 @@
       background-color: #e69500;
   }
 </style>
-
-<!-- Back to Home Button -->
-<div class="text-center mt-4">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Home</a>
-</div>
-
 {% endblock content %}
-

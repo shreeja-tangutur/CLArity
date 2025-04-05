@@ -12,7 +12,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, AnonymousUser
 from allauth.account.views import LogoutView
-from .forms import CollectionForm
+from .forms import CollectionForm, BorrowRequestForm
 from .forms import ItemForm
 from .models import Item, Collection
 
@@ -163,6 +163,18 @@ def setting(request):
     return render(request, 'base/setting.html')
 
 @login_required
+def borrow_request(request):
+    if request.method == "POST":
+        form = BorrowRequestForm(request.POST)
+        if form.is_valid():
+            borrow_request = form.save(commit=False)
+            borrow_request.user = request.user
+            borrow_request.save()
+            messages.success(request, "Borrow request submitted!")
+            return redirect('dashboard')
+    return redirect('dashboard')
+
+@login_required
 def create_item(request):
     if not request.user.is_librarian():
         messages.error(request, "Only librarians can add new items.")
@@ -306,87 +318,6 @@ def checkout(request):
     request.session['cart'] = []
 
     return render(request, 'cart/checkout.html', {'items': items})
-
-def upload_xlsx(request):
-    if request.method == 'POST' and request.FILES.get('xlsx_file'):
-        xlsx_file = request.FILES['xlsx_file']
-        try:
-            wb = openpyxl.load_workbook(xlsx_file)
-            ws = wb.active
-        except Exception as e:
-            messages.error(request, f"Error reading XLSX file: {e}")
-            return render(request, 'base/upload.html')
-
-        headers = [str(cell.value).strip().lower() if cell.value else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
-
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            data = dict(zip(headers, row))
-
-            identifier = data.get("identifier", "")
-            title = data.get("title", "")
-            description = data.get("description", "")
-            location = data.get("location", "")
-            status = data.get("status", "available")
-
-            try:
-                rating = float(data.get("rating", 0))
-            except (TypeError, ValueError):
-                rating = 0.0
-
-            try:
-                borrow_period_days = int(data.get("borrow_period_days", 30))
-            except (TypeError, ValueError):
-                borrow_period_days = 30
-
-            try:
-                condition = int(data.get("condition", 10))
-            except (TypeError, ValueError):
-                condition = 10
-
-            if not identifier:
-                messages.error(request, "Identifier missing for a row; skipping it.")
-                continue
-
-            try:
-                item, created = Item.objects.get_or_create(
-                    identifier=identifier,
-                    defaults={
-                        'title': title,
-                        'description': description,
-                        'location': location,
-                        'status': status if status in dict(Item.STATUS_CHOICES) else 'available',
-                        'rating': rating,
-                        'borrow_period_days': borrow_period_days,
-                        'condition': condition,
-                    }
-                )
-
-                if not created:
-                    item.title = title
-                    item.description = description
-                    item.location = location
-                    if status in dict(Item.STATUS_CHOICES):
-                        item.status = status
-                    item.rating = rating
-                    item.borrow_period_days = borrow_period_days
-                    item.condition = condition
-                    item.save()
-
-                collections_str = data.get("collections", "")
-                if collections_str:
-                    collection_names = [name.strip() for name in collections_str.split(",") if name.strip()]
-                    for col_name in collection_names:
-                        collection_obj, _ = Collection.objects.get_or_create(title=col_name)
-                        item.collections.add(collection_obj)
-
-            except Exception as e:
-                messages.error(request, f"Error processing item with identifier {identifier}: {e}")
-                continue
-
-        messages.success(request, "XLSX data uploaded successfully!")
-        return redirect('items_list')
-
-    return render(request, 'base/upload.html')
 
 def main():
     for result in get_visible_data_for_user(AnonymousUser()):

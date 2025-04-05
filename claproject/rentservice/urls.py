@@ -20,7 +20,6 @@ urlpatterns = [
     path('item/<str:identifier>/', views.item_detail, name='item_detail'),
 
     # Temporary
-    path('upload-xlsx/', views.upload_xlsx, name='upload_xlsx'),
     path('items/', views.items_list, name='items_list'),
 
     # Menu
@@ -31,4 +30,8 @@ urlpatterns = [
     path('collections/create/', views.create_collection, name='create_collection'),
     path('collections/<int:pk>/edit/', views.edit_collection, name='edit_collection'),
     path('collections/<int:pk>/delete/', views.delete_collection, name='delete_collection'),
+
+    # Borrow Request
+    path("borrow/", views.borrow_request, name="borrow_request"),
+
 ]
