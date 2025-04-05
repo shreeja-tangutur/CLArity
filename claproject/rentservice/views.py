@@ -15,6 +15,7 @@ from allauth.account.views import LogoutView
 from .forms import CollectionForm, BorrowRequestForm
 from .forms import ItemForm
 from .models import Item, Collection
+from django.db.models import Q
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -56,7 +57,7 @@ def google_login_callback(request):
 
 def dashboard(request):
     profile = None
-
+    patrons = None
     if request.user.is_authenticated:
         profile, _ = Profile.objects.get_or_create(user=request.user)
 
@@ -70,6 +71,9 @@ def dashboard(request):
             return redirect('dashboard')
 
         user_type = request.user.role
+        if request.user.is_librarian():
+            patrons = User.objects.filter(role='patron')
+
     else:
         user_type = "anonymous"
 
@@ -80,6 +84,7 @@ def dashboard(request):
         'profile': profile,
         'items': data['items'],
         'collections': data['collections'],
+        'patrons': patrons
     })
 
 
@@ -112,6 +117,19 @@ def get_visible_data_for_user(user):
         "items": visible_items
     }
 
+@login_required
+def upgrade_user(request, user_id):
+    if not request.user.is_librarian():
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+    user.role = 'librarian'
+    user.save()
+    messages.success(request, f"{user.username} has been upgraded to librarian.")
+    return redirect('dashboard')
+
+
 def sign_out(request):
     logout(request)
     return redirect('dashboard')
@@ -134,14 +152,45 @@ def collection_detail(request, collection_title):
 
 @csrf_exempt
 def search_items(request):
-    query = request.GET.get('q', '')
-    results = []
+    from django.db.models import Q
+
+    query = request.GET.get('q', '').strip()
+    item_results = []
+    collection_results = []
+
+    # Get visible collections for the user
+    if request.user.is_authenticated:
+        if request.user.is_librarian():
+            visible_collections = Collection.objects.all()
+        else:
+            visible_collections = Collection.objects.filter(
+                Q(is_public=True) | Q(private_users=request.user)
+            ).distinct()
+    else:
+        visible_collections = Collection.objects.filter(is_public=True)
 
     if query:
-        results = Item.objects.filter(title__icontains=query)
+        # Search collections (limit based on access)
+        collection_results = visible_collections.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        ).distinct()
+
+        # Search items (filter based on visibility)
+        items_in_collections = Item.objects.filter(
+            collections__in=visible_collections
+        )
+        items_without_collections = Item.objects.filter(collections=None)
+
+        visible_items = (items_in_collections | items_without_collections).distinct()
+
+        item_results = visible_items.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        ).distinct()
+
     return render(request, 'search/search_results.html', {
         'query': query,
-        'results': results
+        'item_results': item_results,
+        'collection_results': collection_results,
     })
 
 
