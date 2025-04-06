@@ -25,6 +25,8 @@ urlpatterns = [
     # Menu
     path('profile/', views.profile, name='profile'),
     path('settings/', views.setting, name='setting'),
+    path("view-requests/", views.view_borrow_requests, name="view_borrow_requests"), #only to librarians
+
 
     path('items/create/', views.create_item, name='create_item'),
     path('collections/create/', views.create_collection, name='create_collection'),

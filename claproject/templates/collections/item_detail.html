@@ -6,6 +6,16 @@
 {% endblock title %}
 
 {% block content %}
+<!-- 🔔 Move message block here -->
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
 <div class="container mt-5">
   <div class="row">
     <!-- Product Image Section -->

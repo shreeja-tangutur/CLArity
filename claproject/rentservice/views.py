@@ -12,9 +12,9 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, AnonymousUser
 from allauth.account.views import LogoutView
-from .forms import CollectionForm, BorrowRequestForm
+from .forms import CollectionForm
 from .forms import ItemForm
-from .models import Item, Collection
+from .models import Item, Collection, BorrowRequest
 from django.db.models import Q
 
 from django.contrib.auth.forms import AuthenticationForm
@@ -216,17 +216,26 @@ def profile(request):
 def setting(request):
     return render(request, 'base/setting.html')
 
+def view_borrow_requests(request):
+    requests = BorrowRequest.objects.select_related("user", "item").order_by("-timestamp")
+    return render(request, "base/view_request.html", {"requests": requests})
+
 @login_required
 def borrow_request(request):
     if request.method == "POST":
-        form = BorrowRequestForm(request.POST)
-        if form.is_valid():
-            borrow_request = form.save(commit=False)
-            borrow_request.user = request.user
-            borrow_request.save()
-            messages.success(request, "Borrow request submitted!")
-            return redirect('dashboard')
-    return redirect('dashboard')
+        item_id = request.POST.get("item")
+        item = get_object_or_404(Item, pk=item_id)
+
+        # Check if the user already has a request for this item
+        existing_request = BorrowRequest.objects.filter(user=request.user, item=item).exists()
+        if existing_request:
+            messages.warning(request, "You have already requested this item.")
+            return redirect('item_detail', identifier=item.identifier)
+
+        BorrowRequest.objects.create(user=request.user, item=item)
+        return render(request, "rentservice/borrow_request_success.html")
+    return redirect("dashboard")
+
 
 @login_required
 def create_item(request):

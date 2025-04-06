@@ -1,0 +1,22 @@
+{% extends "base/base.html" %}
+{% block content %}
+<h2>All Borrow Requests</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Item</th>
+            <th>Requested At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in requests %}
+        <tr>
+            <td>{{ request.user.username }}</td>
+            <td>{{ request.item.title }}</td>
+            <td>{{ request.timestamp|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

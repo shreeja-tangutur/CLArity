@@ -22,19 +22,40 @@
             <button class="btn btn-outline-light" type="submit">Search</button>
         </form>
 
+        <a href="{% url 'cart' %}" class="text-white me-3 position-relative">
+            <i class="bi bi-cart" style="font-size: 1.4rem;"></i>
+            <!-- Optionally add a badge for item count -->
+            {# Example: Show count if cart_items exists in context #}
+            {% if cart_items %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ cart_items|length }}
+                    <span class="visually-hidden">items in cart</span>
+                </span>
+            {% endif %}
+        </a>
 
         <!-- Right-side -->
         <div class="d-flex align-items-center">
             {% if request.user.is_authenticated %}
-                <span class="navbar-text me-2">Welcome, {{ request.user.first_name }}!</span>
-
-                {% if request.user.profile.profile_picture %}
-                    <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.first_name }}" class="rounded-circle me-3" style="width:30px; height:30px;">
-                {% else %}
-                    <i class="bi bi-person-circle me-3" style="font-size: 1.5rem;"></i>
-                {% endif %}
-
-                <a href="{% url 'sign_out' %}" class="btn btn-outline-light me-2">Sign Out</a>
+                <div class="dropdown">
+                    <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.first_name }}" class="rounded-circle me-2" style="width:30px; height:30px;">
+                        {% else %}
+                            <i class="bi bi-person-circle me-2" style="font-size: 1.5rem;"></i>
+                        {% endif %}
+                        <strong>{{ request.user.first_name }}</strong>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'setting' %}">Settings</a></li>
+                        {% if request.user.role == "librarian" %}
+                            <li><a class="dropdown-item" href="{% url 'view_borrow_requests' %}">View Requests</a></li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'sign_out' %}">Sign Out</a></li>
+                    </ul>
+                </div>
             {% else %}
                 <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
             {% endif %}
