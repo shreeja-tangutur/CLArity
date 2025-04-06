@@ -143,11 +143,18 @@ def item_detail(request, identifier):
     return render(request, "collections/item_detail.html", {"item": item})
 
 def collection_detail(request, collection_title):
-    collection = get_object_or_404(Collection, title=collection_title)
-    items = collection.items.all()
-    return render(request, 'collections/collection_detail.html', {
-        'collection': collection,
-        'items': items
+    visible_data = get_visible_data_for_user(request.user)
+    collection = visible_data["collections"].filter(title=collection_title).first()
+
+    if not collection:
+        messages.warning(request, "You don't have permission to view this collection.")
+        return redirect("dashboard")
+
+    visible_items = collection.items.filter(id__in=visible_data["items"].values_list('id', flat=True))
+
+    return render(request, "collections/collection_detail.html", {
+        "collection": collection,
+        "items": visible_items
     })
 
 @csrf_exempt

@@ -10,8 +10,7 @@
     {% elif user.role == "patron" %}
         {% include 'dashboard/_patron_dashboard.html' with collections=collections items=items %}
     {% elif user.role == "librarian" %}
-        {% include 'dashboard/_patron_dashboard.html' with collections=collections items=items %}
-        {% include 'dashboard/_librarian_dashboard.html' %}
+        {% include 'dashboard/_librarian_dashboard.html' with collections=collections items=items%}
     {% else %}
         <h1>Welcome to Renting App</h1>
     {% endif %}

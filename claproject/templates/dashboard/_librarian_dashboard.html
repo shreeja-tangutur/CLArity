@@ -1,3 +1,61 @@
+{% load static %}
+
+{% block content %}
+<div class="text-center">
+    <h1>Explore Our Collections</h1>
+</div>
+
+<div class="row">
+    {% for collection in collections %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="https://via.placeholder.com/400x250?text={{ collection.title|urlencode }}" class="card-img-top" alt="{{ collection.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ collection.title }}</h5>
+                    <p class="card-text">{{ collection.description|default:"No description available." }}</p>
+                        <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-outline-primary">
+                            View {{ collection.title }}
+                        </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No collections to display.</p>
+    {% endfor %}
+</div>
+
+<div class="text-center mt-5">
+    <h2>Or browse individual items</h2>
+</div>
+
+<div class="text-center mb-4">
+    <a href="{% url 'create_collection' %}" class="btn btn-primary">
+        Create Collection
+    </a>
+</div>
+
+<div class="row">
+    {% for item in items %}
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/300x200?text=Item" class="card-img-top" alt="{{ item.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p class="card-text">{{ item.description|truncatewords:15 }}</p>
+                    <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted">No items available to show.</p>
+    {% endfor %}
+</div>
+{% endblock content %}
+
 <div class="mt-5">
   <hr>
   <h2 class="text-center">Librarian Tools</h2>

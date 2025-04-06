@@ -13,9 +13,13 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ collection.title }}</h5>
                     <p class="card-text">{{ collection.description|default:"No description available." }}</p>
-                    <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-outline-primary">
-                        View {{ collection.title }}
-                    </a>
+                    {% if collection.is_public == False%}
+                        <p class="alert alert-secondary">This is a private collection. Only librarians can view it.</p>
+                    {% else %}
+                        <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-outline-primary">
+                            View {{ collection.title }}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
