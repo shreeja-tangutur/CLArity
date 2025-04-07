@@ -33,12 +33,12 @@
         <div class="col-md-3 mb-4">
             <div class="card h-100">
                 {% if item.image %}
-                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}">
                 {% else %}
-                    <img src="https://via.placeholder.com/300x200?text=Item" class="card-img-top" alt="{{ item.name }}">
+                    <img src="https://via.placeholder.com/300x200?text=Item" class="card-img-top" alt="{{ item.title }}">
                 {% endif %}
                 <div class="card-body">
-                    <h5 class="card-title">{{ item.name }}</h5>
+                    <h5 class="card-title">{{ item.title }}</h5>
                     <p class="card-text">{{ item.description|truncatewords:15 }}</p>
                     <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
                 </div>

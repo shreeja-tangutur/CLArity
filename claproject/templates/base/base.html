@@ -55,6 +55,7 @@
                         <li><a class="dropdown-item" href="{% url 'my_items' %}">My Items</a></li>
                         {% if request.user.role == "librarian" %}
                             <li><a class="dropdown-item" href="{% url 'view_borrow_requests' %}">View Requests</a></li>
+                            <li><a class="dropdown-item" href="{% url 'quality_assurance' %}">Quality Assurance</a></li>
                         {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'sign_out' %}">Sign Out</a></li>

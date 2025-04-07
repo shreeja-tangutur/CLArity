@@ -181,8 +181,7 @@ class BorrowRequest(models.Model):
     borrowed_at = models.DateTimeField(null=True, blank=True)
     returned_at = models.DateTimeField(null=True, blank=True)
 
-    class Meta:
-        unique_together = ('user', 'item')
+    is_complete = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} requests {self.item.name}"

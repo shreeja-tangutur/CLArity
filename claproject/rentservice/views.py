@@ -255,7 +255,29 @@ def profile(request):
 def setting(request):
     return render(request, 'base/setting.html')
 
-# Librarian view
+@login_required
+def borrow_request(request):
+    if request.method == "POST":
+        item_id = request.POST.get("item")
+        item = get_object_or_404(Item, pk=item_id)
+
+        # Prevent duplicate active request
+        existing_request = BorrowRequest.objects.filter(
+            user=request.user,
+            item=item,
+            is_complete=False
+        ).exists()
+
+        if existing_request:
+            messages.warning(request, "You have already requested or are currently borrowing this item.")
+            return redirect('item_detail', identifier=item.identifier)
+
+        BorrowRequest.objects.create(user=request.user, item=item)
+        return render(request, "rentservice/borrow_request_success.html")
+
+    return redirect("dashboard")
+
+@login_required
 def view_borrow_requests(request):
     if request.method == "POST":
         request_id = request.POST.get("request_id")
@@ -265,18 +287,23 @@ def view_borrow_requests(request):
 
         if action == "approve":
             borrow_request.status = "approved"
+            borrow_request.borrowed_condition = borrow_request.item.condition
+            borrow_request.borrowed_at = timezone.now()
+            borrow_request.is_complete = False  # Still active
             borrow_request.item.mark_as_borrowed()
+
         elif action == "decline":
             borrow_request.status = "declined"
+            borrow_request.is_complete = True  # Done
 
         borrow_request.save()
         return redirect("view_borrow_requests")
 
     requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-timestamp")
-
     return render(request, "base/view_request.html", {"requests": requests})
 
-# approve/decline handling
+
+@login_required
 def respond_borrow_request(request, request_id, action):
     borrow_request = get_object_or_404(BorrowRequest, id=request_id)
 
@@ -284,31 +311,16 @@ def respond_borrow_request(request, request_id, action):
         borrow_request.status = 'approved'
         borrow_request.borrowed_condition = borrow_request.item.condition
         borrow_request.borrowed_at = timezone.now()
+        borrow_request.is_complete = False
         borrow_request.item.mark_as_borrowed()
-        borrow_request.save()
 
     elif action == 'decline':
         borrow_request.status = 'declined'
-        borrow_request.save()
+        borrow_request.is_complete = True
 
+    borrow_request.save()
     return redirect('view_borrow_requests')
 
-# For Borrow Request Button
-@login_required
-def borrow_request(request):
-    if request.method == "POST":
-        item_id = request.POST.get("item")
-        item = get_object_or_404(Item, pk=item_id)
-
-        # Check if the user already has a request for this item
-        existing_request = BorrowRequest.objects.filter(user=request.user, item=item).exists()
-        if existing_request:
-            messages.warning(request, "You have already requested this item.")
-            return redirect('item_detail', identifier=item.identifier)
-
-        BorrowRequest.objects.create(user=request.user, item=item)
-        return render(request, "rentservice/borrow_request_success.html")
-    return redirect("dashboard")
 
 
 @login_required
@@ -458,13 +470,22 @@ def checkout(request):
 
 @login_required
 def my_items(request):
-    approved = BorrowRequest.objects.filter(user=request.user, status='approved')
-    returned = BorrowRequest.objects.filter(user=request.user, status='returned')
-    declined = BorrowRequest.objects.filter(user=request.user, status='declined')
+    currently_borrowing = BorrowRequest.objects.filter(
+        user=request.user,
+        status='approved',
+        item__status='in_circulation'
+    ).select_related("item")
+
+    history = BorrowRequest.objects.filter(
+        user=request.user,
+        status__in=['returned', 'declined']
+    ).select_related("item")
+
     return render(request, 'base/my_items.html', {
-        'currently_borrowing': approved,
-        'history': returned | declined
+        'currently_borrowing': currently_borrowing,
+        'history': history
     })
+
 
 @login_required
 def return_item(request, request_id):
@@ -473,8 +494,58 @@ def return_item(request, request_id):
     borrow_request.returned_at = timezone.now()
     borrow_request.returned_condition = borrow_request.item.condition
     borrow_request.item.mark_as_being_inspected()
+    borrow_request.item.save()
     borrow_request.save()
     return redirect('my_items')
+
+@login_required
+def quality_assurance(request):
+    if not request.user.is_librarian():
+        return redirect("dashboard")
+
+    returned_requests = BorrowRequest.objects.filter(
+        status="returned",
+        is_complete=False,
+        returned_condition__isnull=False
+    ).select_related("item")
+
+    seen_item_ids = set()
+    passed_qc = []
+    needs_repair = []
+
+    for req in returned_requests:
+        item = req.item
+        if item.id in seen_item_ids:
+            continue  # avoid duplicates
+        if item.status != "being_inspected":
+            continue  # not relevant for QA
+
+        seen_item_ids.add(item.id)
+
+        if req.returned_condition >= 6:
+            passed_qc.append(item)
+        else:
+            needs_repair.append(item)
+
+    return render(request, "base/quality_assurance.html", {
+        "passed_qc": passed_qc,
+        "needs_repair": needs_repair,
+    })
+
+@login_required
+def mark_item_repaired(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    item.mark_as_available()
+    BorrowRequest.objects.filter(item=item, status="returned", is_complete=False).update(is_complete=True)
+    return redirect('quality_assurance')
+
+@login_required
+def mark_item_available(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if item.status == "being_inspected":
+        item.mark_as_available()
+        BorrowRequest.objects.filter(item=item, status="returned", is_complete=False).update(is_complete=True)
+    return redirect("quality_assurance")
 
 
 def main():

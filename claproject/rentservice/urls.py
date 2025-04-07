@@ -25,12 +25,15 @@ urlpatterns = [
     # Menu
     path('profile/', views.profile, name='profile'),
     path('settings/', views.setting, name='setting'),
-    path("view-requests/", views.view_borrow_requests, name="view_borrow_requests"), #only to librarians
     path('my-items/', views.my_items, name='my_items'),
+    path("quality-assurance/", views.quality_assurance, name="quality_assurance"),
+
+    # Quality Check & Repair
+    path("mark-available/<int:item_id>/", views.mark_item_available, name="mark_item_available"),
+    path("mark-repaired/<int:item_id>/", views.mark_item_repaired, name="mark_item_repaired"),
 
     # Return
     path("return-item/<int:request_id>/", views.return_item, name="return_item"),
-
 
     # Item-Collection CRUD
     path('items/create/', views.create_item, name='create_item'),
@@ -40,7 +43,7 @@ urlpatterns = [
 
     # Borrow Request
     path("borrow/", views.borrow_request, name="borrow_request"),
-    path('borrow-request/<int:request_id>/<str:action>/', views.respond_borrow_request, name='respond_borrow_request'),
+    path("view-requests/", views.view_borrow_requests, name="view_borrow_requests"),  # only to librarians
 
     # Upgrade User
     path('upgrade-user/<int:user_id>/', views.upgrade_user, name='upgrade_user'),
