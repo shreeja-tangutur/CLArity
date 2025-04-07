@@ -486,13 +486,13 @@ def my_items(request):
         'history': history
     })
 
-
 @login_required
 def return_item(request, request_id):
     borrow_request = get_object_or_404(BorrowRequest, id=request_id, user=request.user, status='approved')
     borrow_request.status = 'returned'
     borrow_request.returned_at = timezone.now()
-    borrow_request.returned_condition = borrow_request.item.condition
+    borrow_request.returned_condition = None  # Let librarian input later in QA
+    borrow_request.is_complete = False
     borrow_request.item.mark_as_being_inspected()
     borrow_request.item.save()
     borrow_request.save()
@@ -503,23 +503,41 @@ def quality_assurance(request):
     if not request.user.is_librarian():
         return redirect("dashboard")
 
+    if request.method == "POST":
+        request_id = request.POST.get("request_id")
+        returned_condition = request.POST.get("returned_condition")
+        try:
+            borrow_request = BorrowRequest.objects.get(id=request_id)
+            condition = int(returned_condition)
+            if 1 <= condition <= 10:
+                borrow_request.returned_condition = condition
+                borrow_request.save()
+            else:
+                messages.warning(request, "Returned condition must be between 1 and 10.")
+        except Exception as e:
+            messages.error(request, f"Failed to update condition: {e}")
+        return redirect("quality_assurance")
+
     returned_requests = BorrowRequest.objects.filter(
         status="returned",
         is_complete=False,
-        returned_condition__isnull=False
+        returned_condition__isnull=True
     ).select_related("item")
 
     seen_item_ids = set()
     passed_qc = []
     needs_repair = []
 
-    for req in returned_requests:
-        item = req.item
-        if item.id in seen_item_ids:
-            continue  # avoid duplicates
-        if item.status != "being_inspected":
-            continue  # not relevant for QA
+    post_condition_requests = BorrowRequest.objects.filter(
+        status="returned",
+        is_complete=False,
+        returned_condition__isnull=False
+    ).select_related("item")
 
+    for req in post_condition_requests:
+        item = req.item
+        if item.id in seen_item_ids or item.status != "being_inspected":
+            continue
         seen_item_ids.add(item.id)
 
         if req.returned_condition >= 6:
@@ -528,6 +546,7 @@ def quality_assurance(request):
             needs_repair.append(item)
 
     return render(request, "base/quality_assurance.html", {
+        "returned_requests": returned_requests,
         "passed_qc": passed_qc,
         "needs_repair": needs_repair,
     })
@@ -546,7 +565,6 @@ def mark_item_available(request, item_id):
         item.mark_as_available()
         BorrowRequest.objects.filter(item=item, status="returned", is_complete=False).update(is_complete=True)
     return redirect("quality_assurance")
-
 
 def main():
     for result in get_visible_data_for_user(AnonymousUser()):

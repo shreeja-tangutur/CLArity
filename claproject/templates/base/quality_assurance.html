@@ -3,7 +3,34 @@
 
 <h2>Quality Assurance</h2>
 
-<!-- ✅ Items That Can Be Made Available -->
+<!-- 🎚️ Returned Items Awaiting Condition Input -->
+<h4>Enter Returned Condition (Pending Items)</h4>
+{% if returned_requests %}
+<ul class="list-group mb-4">
+  {% for req in returned_requests %}
+    <li class="list-group-item">
+      <strong>{{ req.item.title }}</strong>
+      <form method="post" action="{% url 'quality_assurance' %}" class="mt-2">
+        {% csrf_token %}
+        <input type="hidden" name="request_id" value="{{ req.id }}">
+        <label for="slider{{ req.id }}" class="form-label">
+          Returned Condition: <span id="value{{ req.id }}">5</span>
+        </label>
+        <input type="range" class="form-range" min="1" max="10" step="1" value="5"
+               id="slider{{ req.id }}" name="returned_condition"
+               oninput="document.getElementById('value{{ req.id }}').innerText = this.value;">
+        <button type="submit" class="btn btn-sm btn-primary mt-2">Submit Condition</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted">No items awaiting returned condition input.</p>
+{% endif %}
+
+<hr>
+
+<!-- ✅ Items Ready for Circulation -->
 <h4>Items Ready for Circulation</h4>
 {% if passed_qc %}
 <ul class="list-group mb-4">
@@ -48,4 +75,3 @@
 {% endif %}
 
 {% endblock %}
-
