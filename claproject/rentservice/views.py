@@ -315,7 +315,11 @@ def respond_borrow_request(request, request_id, action):
 @login_required
 def notifications(request):
     user_notifications = request.user.notifications.order_by('-created_at')
-    return render(request, "base/notifications.html", {"notifications": user_notifications})
+    has_unread = has_unread_notifications(request.user)
+    return render(request, "base/notifications.html", {
+        "notifications": user_notifications,
+        "has_unread": has_unread,
+    })
 
 def has_unread_notifications(user):
     if user.is_authenticated:

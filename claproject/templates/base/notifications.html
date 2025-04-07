@@ -4,7 +4,8 @@
 <ul class="list-group">
   {% for note in notifications %}
     <li class="list-group-item {% if not note.is_read %}list-group-item-info{% endif %}">
-      {{ note.message }} <small class="text-muted">{{ note.created_at|timesince }} ago</small>
+      {{ note.message }}
+      <small class="text-muted">{{ note.created_at|timesince }} ago</small>
     </li>
   {% empty %}
     <li class="list-group-item">No notifications yet.</li>

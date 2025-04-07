@@ -63,7 +63,7 @@
                         <li><a class="dropdown-item" href="{% url 'setting' %}">Settings</a></li>
                         <li><a class="dropdown-item" href="{% url 'my_items' %}">My Items</a></li>
                         {% if request.user.role == "librarian" %}
-                            <li><a class="dropdown-item" href="{% url 'view_access_requests' %}">Access Requests</a></li>
+                            <li><a class="dropdown-item" href="{% url 'access_requests' %}">Access Requests</a></li>
                             <li><a class="dropdown-item" href="{% url 'view_borrow_requests' %}">Borrow Requests</a></li>
                             <li><a class="dropdown-item" href="{% url 'quality_assurance' %}">Quality Assurance</a></li>
                             <li><a class="dropdown-item" href="{% url 'catalog_manager' %}">Catalog Manager</a></li>
