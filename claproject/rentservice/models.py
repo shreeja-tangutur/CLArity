@@ -58,8 +58,6 @@ class Item(models.Model):
     collections = models.ManyToManyField('Collection', blank=True)
     deleted = models.BooleanField(default=False)
     condition = models.IntegerField(default=10, validators=[MinValueValidator(1), MaxValueValidator(10)])
-    # comment = models.TextField()
-
 
     def mark_as_available(self):
         self.status = 'available'
@@ -166,9 +164,22 @@ class Profile(models.Model):
 
 
 class BorrowRequest(models.Model):
+    STATUS_CHOICES = [
+        ('requested', 'Requested'),
+        ('approved', 'Approved'),
+        ('declined', 'Declined'),
+        ('returned', 'Returned'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
+    timestamp = models.DateTimeField(auto_now_add=True) # When the request was first made
+
+    borrowed_condition = models.IntegerField(null=True, blank=True)
+    returned_condition = models.IntegerField(null=True, blank=True)
+    borrowed_at = models.DateTimeField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('user', 'item')

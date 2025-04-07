@@ -7,6 +7,7 @@
             <th>User</th>
             <th>Item</th>
             <th>Requested At</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -15,8 +16,23 @@
             <td>{{ request.user.username }}</td>
             <td>{{ request.item.title }}</td>
             <td>{{ request.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="request_id" value="{{ request.id }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                </form>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="request_id" value="{{ request.id }}">
+                    <input type="hidden" name="action" value="decline">
+                    <button type="submit" class="btn btn-danger btn-sm">Decline</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% endblock %}
+

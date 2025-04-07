@@ -14,6 +14,7 @@ from django.contrib.auth.models import Group, AnonymousUser
 from .forms import CollectionForm, ItemForm, RatingCommentForm
 from .models import Item, Collection, BorrowRequest
 from django.db.models import Avg
+from django.utils import timezone
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -143,13 +144,12 @@ def item_detail(request, identifier):
     ratings = item.ratings.all()
     avg_rating = round(ratings.aggregate(Avg('score'))['score__avg'] or 0, 1)
 
-    # Comments retreivng
+    # Comments retrieving
     recent_comments = item.comments.order_by('-created_at')[:5]
 
     if request.method == 'POST':
         form = RatingCommentForm(request.POST)
         if form.is_valid():
-            # Prevent duplicate rating by the same user
             Rating.objects.update_or_create(
                 user=request.user,
                 item=item,
@@ -255,10 +255,45 @@ def profile(request):
 def setting(request):
     return render(request, 'base/setting.html')
 
+# Librarian view
 def view_borrow_requests(request):
-    requests = BorrowRequest.objects.select_related("user", "item").order_by("-timestamp")
+    if request.method == "POST":
+        request_id = request.POST.get("request_id")
+        action = request.POST.get("action")
+
+        borrow_request = get_object_or_404(BorrowRequest, id=request_id)
+
+        if action == "approve":
+            borrow_request.status = "approved"
+            borrow_request.item.mark_as_borrowed()
+        elif action == "decline":
+            borrow_request.status = "declined"
+
+        borrow_request.save()
+        return redirect("view_borrow_requests")
+
+    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-timestamp")
+
     return render(request, "base/view_request.html", {"requests": requests})
 
+# approve/decline handling
+def respond_borrow_request(request, request_id, action):
+    borrow_request = get_object_or_404(BorrowRequest, id=request_id)
+
+    if action == 'approve':
+        borrow_request.status = 'approved'
+        borrow_request.borrowed_condition = borrow_request.item.condition
+        borrow_request.borrowed_at = timezone.now()
+        borrow_request.item.mark_as_borrowed()
+        borrow_request.save()
+
+    elif action == 'decline':
+        borrow_request.status = 'declined'
+        borrow_request.save()
+
+    return redirect('view_borrow_requests')
+
+# For Borrow Request Button
 @login_required
 def borrow_request(request):
     if request.method == "POST":
@@ -421,6 +456,27 @@ def checkout(request):
 
     return render(request, 'cart/checkout.html', {'items': items})
 
+@login_required
+def my_items(request):
+    approved = BorrowRequest.objects.filter(user=request.user, status='approved')
+    returned = BorrowRequest.objects.filter(user=request.user, status='returned')
+    declined = BorrowRequest.objects.filter(user=request.user, status='declined')
+    return render(request, 'base/my_items.html', {
+        'currently_borrowing': approved,
+        'history': returned | declined
+    })
+
+@login_required
+def return_item(request, request_id):
+    borrow_request = get_object_or_404(BorrowRequest, id=request_id, user=request.user, status='approved')
+    borrow_request.status = 'returned'
+    borrow_request.returned_at = timezone.now()
+    borrow_request.returned_condition = borrow_request.item.condition
+    borrow_request.item.mark_as_being_inspected()
+    borrow_request.save()
+    return redirect('my_items')
+
+
 def main():
     for result in get_visible_data_for_user(AnonymousUser()):
         print(result)
@@ -428,3 +484,4 @@ def main():
 
 for result in get_visible_data_for_user(AnonymousUser()):
     print(result)
+

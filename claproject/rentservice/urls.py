@@ -26,8 +26,13 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('settings/', views.setting, name='setting'),
     path("view-requests/", views.view_borrow_requests, name="view_borrow_requests"), #only to librarians
+    path('my-items/', views.my_items, name='my_items'),
+
+    # Return
+    path("return-item/<int:request_id>/", views.return_item, name="return_item"),
 
 
+    # Item-Collection CRUD
     path('items/create/', views.create_item, name='create_item'),
     path('collections/create/', views.create_collection, name='create_collection'),
     path('collections/<int:pk>/edit/', views.edit_collection, name='edit_collection'),
@@ -35,6 +40,7 @@ urlpatterns = [
 
     # Borrow Request
     path("borrow/", views.borrow_request, name="borrow_request"),
+    path('borrow-request/<int:request_id>/<str:action>/', views.respond_borrow_request, name='respond_borrow_request'),
 
     # Upgrade User
     path('upgrade-user/<int:user_id>/', views.upgrade_user, name='upgrade_user'),

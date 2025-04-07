@@ -1,0 +1,79 @@
+{% extends "base/base.html" %}
+{% block content %}
+
+<h2 class="mb-4">My Items</h2>
+
+<!-- Currently Borrowing -->
+<h4>Currently Borrowing</h4>
+{% if currently_borrowing %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Borrowed At</th>
+            <th>Condition (Borrowed)</th>
+            <th>Condition (Returned)</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in currently_borrowing %}
+        <tr>
+            <td><a href="{% url 'item_detail' identifier=request.item.identifier %}">{{ request.item.title }}</a></td>
+            <td>{{ request.timestamp|date:"Y-m-d" }}</td>
+            <td>{{ request.borrowed_condition }}</td>
+            <td>—</td>
+            <td>
+                <form method="post" action="{% url 'return_item' request.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning btn-sm">Return</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">You are not currently borrowing any items.</p>
+{% endif %}
+
+<hr class="my-5">
+
+<!-- History Section -->
+<h4>Borrowing History</h4>
+{% if history %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Borrowed At</th>
+            <th>Returned At</th>
+            <th>Condition (Borrowed)</th>
+            <th>Condition (Returned)</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in history %}
+        <tr>
+            <td><a href="{% url 'item_detail' identifier=request.item.identifier %}">{{ request.item.title }}</a></td>
+            <td>{{ request.timestamp|date:"Y-m-d" }}</td>
+            <td>
+                {% if request.returned_at %}
+                    {{ request.returned_at|date:"Y-m-d" }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td>{{ request.borrowed_condition }}</td>
+            <td>{{ request.returned_condition|default:"—" }}</td>
+            <td class="text-capitalize">{{ request.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">No previous borrowing history yet.</p>
+{% endif %}
+
+{% endblock %}

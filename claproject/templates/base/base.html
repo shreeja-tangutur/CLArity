@@ -17,10 +17,12 @@
 
         
         <!-- Search Form -->
-        <form action="{% url 'search_items' %}" method="get" class="d-flex me-auto" role="search" style="max-width: 400px;">
-            <input class="form-control me-2" type="search" name="q" placeholder="Search items or collections..." aria-label="Search">
-            <button class="btn btn-outline-light" type="submit">Search</button>
-        </form>
+        <div class="d-flex justify-content-center w-100">
+            <form action="{% url 'search_items' %}" method="get" class="d-flex" role="search" style="max-width: 400px;">
+                <input class="form-control me-2" style="min-width: 350px;" type="search" name="q" placeholder="Search items or collections..." aria-label="Search">
+                <button class="btn btn-outline-light" type="submit">Search</button>
+            </form>
+        </div>
 
         <a href="{% url 'cart' %}" class="text-white me-3 position-relative">
             <i class="bi bi-cart" style="font-size: 1.4rem;"></i>
@@ -33,6 +35,7 @@
                 </span>
             {% endif %}
         </a>
+
 
         <!-- Right-side -->
         <div class="d-flex align-items-center">
@@ -49,6 +52,7 @@
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
                         <li><a class="dropdown-item" href="{% url 'setting' %}">Settings</a></li>
+                        <li><a class="dropdown-item" href="{% url 'my_items' %}">My Items</a></li>
                         {% if request.user.role == "librarian" %}
                             <li><a class="dropdown-item" href="{% url 'view_borrow_requests' %}">View Requests</a></li>
                         {% endif %}
@@ -57,7 +61,7 @@
                     </ul>
                 </div>
             {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Sign In</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light me-2" style="white-space: nowrap;">Sign In</a>
             {% endif %}
         </div>
     </div>
