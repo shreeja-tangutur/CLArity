@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from typing import List
 
@@ -185,3 +186,27 @@ class BorrowRequest(models.Model):
 
     def __str__(self):
         return f"{self.user.username} requests {self.item.name}"
+
+class CollectionAccessRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("denied", "Denied"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    collection = models.ForeignKey("Collection", on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    requested_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'collection')  # prevent duplicate requests
+
+    def __str__(self):
+        return f"{self.user.email} requests access to '{self.collection.title}'"
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)

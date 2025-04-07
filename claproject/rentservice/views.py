@@ -5,14 +5,14 @@ import openpyxl
 
 from django.http import HttpResponse
 from django.contrib import messages
-from .models import Profile, User, Item, Rating, Comment
+from .models import Profile, User, Item, Rating, Comment, Notification
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, AnonymousUser
 from .forms import CollectionForm, ItemForm, RatingCommentForm
-from .models import Item, Collection, BorrowRequest
+from .models import Item, Collection, BorrowRequest, CollectionAccessRequest
 from django.db.models import Avg
 from django.utils import timezone
 
@@ -83,7 +83,8 @@ def dashboard(request):
         'profile': profile,
         'items': data['items'],
         'collections': data['collections'],
-        'patrons': patrons
+        'patrons': patrons,
+        "has_unread": has_unread_notifications(request.user),
     })
 
 
@@ -115,19 +116,6 @@ def get_visible_data_for_user(user):
         "collections": visible_collections,
         "items": visible_items
     }
-
-@login_required
-def upgrade_user(request, user_id):
-    if not request.user.is_librarian():
-        messages.error(request, "You do not have permission to perform this action.")
-        return redirect('dashboard')
-
-    user = get_object_or_404(User, id=user_id)
-    user.role = 'librarian'
-    user.save()
-    messages.success(request, f"{user.username} has been upgraded to librarian.")
-    return redirect('dashboard')
-
 
 def sign_out(request):
     logout(request)
@@ -313,15 +301,26 @@ def respond_borrow_request(request, request_id, action):
         borrow_request.borrowed_at = timezone.now()
         borrow_request.is_complete = False
         borrow_request.item.mark_as_borrowed()
+        message = f"Your borrow request for '{borrow_request.item.title}' was approved!"
 
     elif action == 'decline':
         borrow_request.status = 'declined'
         borrow_request.is_complete = True
+        message = f"Your borrow request for '{borrow_request.item.title}' was declined!"
 
     borrow_request.save()
+    Notification.objects.create(user=borrow_request.user, message=message)
     return redirect('view_borrow_requests')
 
+@login_required
+def notifications(request):
+    user_notifications = request.user.notifications.order_by('-created_at')
+    return render(request, "base/notifications.html", {"notifications": user_notifications})
 
+def has_unread_notifications(user):
+    if user.is_authenticated:
+        return Notification.objects.filter(user=user, is_read=False).exists()
+    return False
 
 @login_required
 def create_item(request):
@@ -565,6 +564,129 @@ def mark_item_available(request, item_id):
         item.mark_as_available()
         BorrowRequest.objects.filter(item=item, status="returned", is_complete=False).update(is_complete=True)
     return redirect("quality_assurance")
+
+@login_required
+def request_access(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+
+    already_requested = CollectionAccessRequest.objects.filter(
+        user=request.user,
+        collection=collection,
+        status='pending'
+    ).exists()
+
+    already_approved = collection.private_users.filter(id=request.user.id).exists()
+
+    if not already_requested and not already_approved:
+        CollectionAccessRequest.objects.create(
+            user=request.user,
+            collection=collection,
+            status='pending'
+        )
+        messages.success(request, "Access request submitted.")
+    else:
+        messages.info(request, "You have already requested or received access.")
+
+    return redirect("dashboard")
+
+
+@login_required
+def access_requests(request):
+    if not request.user.is_librarian():
+        return redirect('dashboard')
+
+    patrons = User.objects.filter(role='patron')
+    access_requests = CollectionAccessRequest.objects.select_related('user', 'collection').filter(status='pending')
+
+    return render(request, "base/access_requests.html", {
+        "patrons": patrons,
+        "access_requests": access_requests
+    })
+
+@login_required
+def handle_access_request(request, request_id):
+    if not request.user.is_librarian():
+        return redirect("dashboard")
+
+    action = request.POST.get("action")
+    access_request = get_object_or_404(CollectionAccessRequest, id=request_id)
+
+    if action == "approve":
+        access_request.status = "approved"
+        access_request.collection.private_users.add(access_request.user)
+    elif action == "deny":
+        access_request.status = "denied"
+
+    access_request.save()
+    return redirect("access_requests")
+
+@login_required
+def upgrade_user(request, user_id):
+    if not request.user.is_librarian():
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('dashboard')
+
+    user = get_object_or_404(User, id=user_id)
+    user.role = 'librarian'
+    user.save()
+    messages.success(request, f"{user.username} has been upgraded to librarian.")
+    return redirect('dashboard')
+
+@login_required
+def catalog_manager(request):
+    if not request.user.is_librarian():
+        return redirect('dashboard')
+
+    items = Item.objects.all()
+    collections = Collection.objects.all()
+    return render(request, 'base/catalog_manager.html', {
+        'items': items,
+        'collections': collections
+    })
+
+@login_required
+def edit_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == "POST":
+        form = ItemForm(request.POST, request.FILES, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Item updated successfully.")
+            return redirect("catalog_manager")
+    else:
+        form = ItemForm(instance=item)
+    return render(request, "collections/edit_item.html", {"form": form, "item": item})
+
+@login_required
+def delete_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == "POST":
+        item.delete()
+        messages.success(request, "Item deleted successfully.")
+        return redirect("catalog_manager")
+    return render(request, "collections/confirm_delete_item.html", {"item": item})
+
+@login_required
+def edit_collection(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    if request.method == "POST":
+        form = CollectionForm(request.POST, instance=collection)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Collection updated successfully.")
+            return redirect("catalog_manager")
+    else:
+        form = CollectionForm(instance=collection)
+    return render(request, "collections/edit_collection.html", {"form": form, "collection": collection})
+
+@login_required
+def delete_collection(request, collection_id):
+    collection = get_object_or_404(Collection, id=collection_id)
+    if request.method == "POST":
+        collection.delete()
+        messages.success(request, "Collection deleted successfully.")
+        return redirect("catalog_manager")
+    return render(request, "collections/confirm_delete_collection.html", {"collection": collection})
 
 def main():
     for result in get_visible_data_for_user(AnonymousUser()):
