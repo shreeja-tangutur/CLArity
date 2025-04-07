@@ -4,11 +4,17 @@ from .models import Item, Collection
 from django.core.exceptions import ValidationError
 
 
-class BorrowRequestForm(forms.ModelForm):
-    class Meta:
-        model = BorrowRequest
-        fields = ['item'] 
-
+class RatingCommentForm(forms.Form):
+    score = forms.ChoiceField(
+        choices=[(i, str(i)) for i in range(1, 6)],
+        label='Rating',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    text = forms.CharField(
+        label='Leave a Comment',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        max_length=500
+    )
 
 class ItemForm(forms.ModelForm):
     collection = forms.ModelChoiceField(

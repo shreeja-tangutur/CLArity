@@ -90,14 +90,12 @@ class Comment(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class Rating(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="ratings")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    value = models.FloatField(default=0.0, validators=[MinValueValidator(1), MaxValueValidator(5)])
-    timestamp = models.DateTimeField(auto_now_add=True)
-
+    score = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], default=0.0)
 
 class Collection(models.Model):
     title = models.CharField(max_length=255)

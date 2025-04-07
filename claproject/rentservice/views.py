@@ -5,17 +5,15 @@ import openpyxl
 
 from django.http import HttpResponse
 from django.contrib import messages
-from .models import Profile, User, Item
+from .models import Profile, User, Item, Rating, Comment
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, AnonymousUser
-from allauth.account.views import LogoutView
-from .forms import CollectionForm
-from .forms import ItemForm
+from .forms import CollectionForm, ItemForm, RatingCommentForm
 from .models import Item, Collection, BorrowRequest
-from django.db.models import Q
+from django.db.models import Avg
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -140,7 +138,41 @@ def items_list(request):
 
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
-    return render(request, "collections/item_detail.html", {"item": item})
+
+    # Calculate rating
+    ratings = item.ratings.all()
+    avg_rating = round(ratings.aggregate(Avg('score'))['score__avg'] or 0, 1)
+
+    # Comments retreivng
+    recent_comments = item.comments.order_by('-created_at')[:5]
+
+    if request.method == 'POST':
+        form = RatingCommentForm(request.POST)
+        if form.is_valid():
+            # Prevent duplicate rating by the same user
+            Rating.objects.update_or_create(
+                user=request.user,
+                item=item,
+                defaults={'score': form.cleaned_data['score']}
+            )
+
+            Comment.objects.create(
+                user=request.user,
+                item=item,
+                text=form.cleaned_data['text']
+            )
+
+            messages.success(request, "Thanks for your rating and comment!")
+            return redirect('item_detail', identifier=item.identifier)
+    else:
+        form = RatingCommentForm()
+
+    return render(request, "collections/item_detail.html", {
+        'item': item,
+        'avg_rating': avg_rating,
+        'recent_comments': recent_comments,
+        'form': form
+    })
 
 def collection_detail(request, collection_title):
     visible_data = get_visible_data_for_user(request.user)

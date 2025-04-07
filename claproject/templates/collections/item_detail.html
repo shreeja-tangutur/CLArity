@@ -7,11 +7,11 @@
 
 {% block content %}
 
-<!-- Message Block (Only Shows Warning Messages) -->
+<!-- Show messages -->
 {% if messages %}
   {% for message in messages %}
     {% if message.tags == "warning" %}
-      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
@@ -35,18 +35,18 @@
       <div class="product-detail">
         <h2>{{ item.title }}</h2>
 
-        <!-- Rating Display -->
+        <!-- Average Rating Display -->
         <div class="mb-3">
           <span class="rating">
             {% for i in "12345" %}
-              {% if forloop.counter <= item.rating|floatformat:0 %}
+              {% if forloop.counter <= avg_rating %}
                 &#9733;
               {% else %}
                 &#9734;
               {% endif %}
             {% endfor %}
           </span>
-          <small class="ml-2">{{ item.rating }} out of 5</small>
+          <small class="ms-2">{{ avg_rating }} out of 5</small>
         </div>
 
         <p>{{ item.description }}</p>
@@ -55,47 +55,97 @@
         <p><strong>Location:</strong> {{ item.location }}</p>
         <p><strong>Borrow Period:</strong> {{ item.borrow_period_days }} days</p>
 
-        {% if item.status == "available" %}
-        <form method="post" action="{% url 'borrow_request' %}">
-          {% csrf_token %}
-          <input type="hidden" name="item" value="{{ item.id }}">
-          <button type="submit" class="borrow-btn">Borrow Request</button>
-        </form>
+        {% if request.user.is_authenticated %}
+          {% if item.status == "available" %}
+            <form method="post" action="{% url 'borrow_request' %}">
+              {% csrf_token %}
+              <input type="hidden" name="item" value="{{ item.id }}">
+              <button type="submit" class="borrow-btn">Borrow Request</button>
+            </form>
+          {% else %}
+            <button class="borrow-btn" disabled>Not Available</button>
+          {% endif %}
         {% else %}
-        <button class="borrow-btn" disabled>Not Available</button>
+          <p class="text-muted mt-2">Sign in to borrow this item.</p>
         {% endif %}
       </div>
     </div>
   </div>
+
+  <hr class="my-5">
+
+  <!-- Comment List -->
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <h4>Latest Comments</h4>
+      {% if recent_comments %}
+        <ul class="list-group">
+          {% for comment in recent_comments %}
+            <li class="list-group-item">
+              <strong>{{ comment.user.first_name }}</strong>: {{ comment.text }}
+              <br><small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No comments yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if request.user.is_authenticated %}
+    <!-- Rating + Comment Form -->
+    <div class="row mt-5">
+      <div class="col-md-8 offset-md-2">
+        <h4>Leave a Rating & Comment</h4>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            {{ form.score.label_tag }} {{ form.score }}
+          </div>
+          <div class="mb-3">
+            {{ form.text.label_tag }} {{ form.text }}
+          </div>
+          <button type="submit" class="btn btn-success">Submit</button>
+        </form>
+      </div>
+    </div>
+  {% else %}
+    <div class="text-center mt-4">
+      <p class="text-muted">Sign in to rate or comment on this item.</p>
+    </div>
+  {% endif %}
 </div>
 
 <style>
   .product-image {
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #e1e1e1;
-      padding: 5px;
-      background: #fff;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #e1e1e1;
+    padding: 5px;
+    background: #fff;
   }
   .rating {
-      color: #f0c14b;
-      font-size: 1.2rem;
+    color: #f0c14b;
+    font-size: 1.2rem;
   }
   .product-detail {
-      padding: 20px;
-      border: 1px solid #e1e1e1;
-      background: #fff;
+    padding: 20px;
+    border: 1px solid #e1e1e1;
+    background: #fff;
   }
   .borrow-btn {
-      background-color: #FFA41C;
-      border: none;
-      color: #fff;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border-radius: 3px;
+    background-color: #FFA41C;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 3px;
   }
   .borrow-btn:hover {
-      background-color: #e69500;
+    background-color: #e69500;
   }
 </style>
+
 {% endblock content %}
+
