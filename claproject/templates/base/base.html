@@ -25,6 +25,7 @@
 
         <!-- Cart & Notifications -->
         <div class="d-flex align-items-center">
+            {% if request.user.is_authenticated %}
             <a href="{% url 'cart' %}" class="text-white me-3 position-relative">
                 <i class="bi bi-cart" style="font-size: 1.4rem;"></i>
                 {% if cart_items %}
@@ -44,6 +45,7 @@
                     </span>
                 {% endif %}
             </a>
+            {% endif %}
 
             <!-- User Dropdown -->
             {% if request.user.is_authenticated %}
