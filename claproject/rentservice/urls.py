@@ -27,6 +27,10 @@ urlpatterns = [
     path('settings/', views.setting, name='setting'),
     path('my-items/', views.my_items, name='my_items'),
     path("quality-assurance/", views.quality_assurance, name="quality_assurance"),
+    path('access-requests/', views.access_requests, name='access_requests'),
+    path("handle-access-request/<int:request_id>/", views.handle_access_request, name="handle_access_request"),
+    path("request-access/<int:collection_id>/", views.request_access, name="request_access"),
+    path('catalog-manager/', views.catalog_manager, name='catalog_manager'),
 
     # Quality Check & Repair
     path("mark-available/<int:item_id>/", views.mark_item_available, name="mark_item_available"),
@@ -37,9 +41,11 @@ urlpatterns = [
 
     # Item-Collection CRUD
     path('items/create/', views.create_item, name='create_item'),
+    path('items/<int:item_id>/edit/', views.edit_item, name='edit_item'),
+    path('items/<int:item_id>/delete/', views.delete_item, name='delete_item'),
     path('collections/create/', views.create_collection, name='create_collection'),
-    path('collections/<int:pk>/edit/', views.edit_collection, name='edit_collection'),
-    path('collections/<int:pk>/delete/', views.delete_collection, name='delete_collection'),
+    path('collections/<str:identifier>/edit/', views.edit_collection, name='edit_collection'),
+    path('collections/<str:identifier>/delete/', views.delete_collection, name='delete_collection'),
 
     # Borrow Request
     path("borrow/", views.borrow_request, name="borrow_request"),
@@ -47,6 +53,9 @@ urlpatterns = [
 
     # Upgrade User
     path('upgrade-user/<int:user_id>/', views.upgrade_user, name='upgrade_user'),
+
+    # Notification
+    path("notifications/", views.notifications, name="notifications")
 
 
 ]

@@ -1,0 +1,74 @@
+{% extends "base/base.html" %}
+{% block content %}
+
+<h2>Catalog Manager</h2>
+
+<!-- ITEMS -->
+<h4>Manage Items</h4>
+<div class="text-end mb-2">
+    <a href="{% url 'create_item' %}" class="btn btn-success">+ Create New Item</a>
+</div>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Identifier</th>
+            <th>Status</th>
+            <th>Condition</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.title }}</td>
+            <td>{{ item.identifier }}</td>
+            <td>{{ item.get_status_display }}</td>
+            <td>{{ item.condition }}</td>
+            <td>
+                <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+
+<!-- COLLECTIONS -->
+<h4>Manage Collections</h4>
+<div class="text-end mb-2">
+    <a href="{% url 'create_collection' %}" class="btn btn-success">+ Create New Collection</a>
+</div>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Visibility</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for collection in collections %}
+        <tr>
+            <td>{{ collection.title }}</td>
+            <td>{{ collection.description|truncatechars:50 }}</td>
+            <td>
+              {% if collection.is_public %}
+                Public
+              {% else %}
+                Private
+              {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'edit_collection' collection.identifier %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'delete_collection' collection.identifier %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

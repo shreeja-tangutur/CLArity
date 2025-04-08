@@ -1,0 +1,12 @@
+{% extends "base/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Item: {{ item.title }}</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a href="{% url 'catalog_manager' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

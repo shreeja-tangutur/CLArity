@@ -13,8 +13,11 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ collection.title }}</h5>
                     <p class="card-text">{{ collection.description|default:"No description available." }}</p>
-                    {% if collection.is_public == False%}
-                        <p class="alert alert-secondary">This is a private collection. Only librarians can view it.</p>
+                    {% if not collection.is_public and request.user not in collection.private_users.all %}
+                        <form method="post" action="{% url 'request_access' collection.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-warning">Request Access</button>
+                        </form>
                     {% else %}
                         <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-outline-primary">
                             View {{ collection.title }}
