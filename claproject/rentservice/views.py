@@ -642,7 +642,6 @@ def request_access(request, collection_id):
         collection=collection,
         status='pending'
     ).exists()
-
     already_approved = collection.private_users.filter(id=request.user.id).exists()
 
     if not already_requested and not already_approved:
