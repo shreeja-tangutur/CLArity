@@ -20,6 +20,16 @@ from django.utils import timezone
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
 
+# Views are structured in the following sections:
+# 1. Authentication & User Management
+# 2. Dashboard
+# 3. Item & Collection Views
+# 4. Cart System
+# 5. Renting System
+# 6. Request System
+
+# ---------------- Authentication & User Management -----------------
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -54,6 +64,29 @@ def google_login_callback(request):
 
     # Redirect to the dashboard
     return redirect('dashboard')
+
+def sign_out(request):
+    logout(request)
+    return redirect('dashboard')
+
+@login_required
+def profile(request):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST' and 'profile_picture' in request.FILES:
+        print("📨 Upload submitted!")
+        profile.profile_picture = request.FILES['profile_picture']
+        profile.save()
+        print("✅ Profile picture updated.")
+        return redirect('profile')
+
+    return render(request, 'base/profile.html', {'profile': profile})
+
+
+def setting(request):
+    return render(request, 'base/setting.html')
+
+# ------------------ DASHBOARD ------------------
 
 def dashboard(request):
     profile = None
@@ -90,11 +123,6 @@ def dashboard(request):
 
 
 def get_visible_data_for_user(user):
-
-    # print("🧪 DEBUG: user =", user)
-    # print("🧪 DEBUG: is_authenticated =", user.is_authenticated)
-    # print("🧪 DEBUG: user.role =", getattr(user, 'role', '❌ No role'))
-
     public_collections = Collection.objects.filter(is_public=True)
     private_collections = Collection.objects.filter(is_public=False)
 
@@ -118,9 +146,7 @@ def get_visible_data_for_user(user):
         "items": visible_items
     }
 
-def sign_out(request):
-    logout(request)
-    return redirect('dashboard')
+# ----------------Item & Collection View ------------------
 
 def items_list(request):
     items = Item.objects.filter(deleted=False)
@@ -178,6 +204,18 @@ def collection_detail(request, collection_title):
         "items": visible_items
     })
 
+@login_required
+def catalog_manager(request):
+    if not request.user.is_librarian():
+        return redirect('dashboard')
+
+    items = Item.objects.all()
+    collections = Collection.objects.all()
+    return render(request, 'base/catalog_manager.html', {
+        'items': items,
+        'collections': collections
+    })
+
 @csrf_exempt
 def search_items(request):
     from django.db.models import Q
@@ -228,111 +266,11 @@ def search_items(request):
 
 
 @login_required
-def profile(request):
-    profile, _ = Profile.objects.get_or_create(user=request.user)
-
-    if request.method == 'POST' and 'profile_picture' in request.FILES:
-        print("📨 Upload submitted!")
-        profile.profile_picture = request.FILES['profile_picture']
-        profile.save()
-        print("✅ Profile picture updated.")
-        return redirect('profile')
-
-    return render(request, 'base/profile.html', {'profile': profile})
-
-
-def setting(request):
-    return render(request, 'base/setting.html')
-
-@login_required
-def borrow_request(request):
-    if request.method == "POST":
-        item_id = request.POST.get("item")
-        item = get_object_or_404(Item, pk=item_id)
-
-        # Prevent duplicate active request
-        existing_request = BorrowRequest.objects.filter(
-            user=request.user,
-            item=item,
-            is_complete=False
-        ).exists()
-
-        if existing_request:
-            messages.warning(request, "You have already requested or are currently borrowing this item.")
-            return redirect('item_detail', identifier=item.identifier)
-
-        BorrowRequest.objects.create(user=request.user, item=item)
-        return render(request, "rentservice/borrow_request_success.html")
-
-    return redirect("dashboard")
-
-@login_required
-def view_borrow_requests(request):
-    if request.method == "POST":
-        request_id = request.POST.get("request_id")
-        action = request.POST.get("action")
-
-        borrow_request = get_object_or_404(BorrowRequest, id=request_id)
-
-        if action == "approve":
-            borrow_request.status = "approved"
-            borrow_request.borrowed_condition = borrow_request.item.condition
-            borrow_request.borrowed_at = timezone.now()
-            borrow_request.is_complete = False  # Still active
-            borrow_request.item.mark_as_borrowed()
-
-        elif action == "decline":
-            borrow_request.status = "declined"
-            borrow_request.is_complete = True  # Done
-
-        borrow_request.save()
-        return redirect("view_borrow_requests")
-
-    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-timestamp")
-    return render(request, "base/view_request.html", {"requests": requests})
-
-
-@login_required
-def respond_borrow_request(request, request_id, action):
-    borrow_request = get_object_or_404(BorrowRequest, id=request_id)
-
-    if action == 'approve':
-        borrow_request.status = 'approved'
-        borrow_request.borrowed_condition = borrow_request.item.condition
-        borrow_request.borrowed_at = timezone.now()
-        borrow_request.is_complete = False
-        borrow_request.item.mark_as_borrowed()
-        message = f"Your borrow request for '{borrow_request.item.title}' was approved!"
-
-    elif action == 'decline':
-        borrow_request.status = 'declined'
-        borrow_request.is_complete = True
-        message = f"Your borrow request for '{borrow_request.item.title}' was declined!"
-
-    borrow_request.save()
-    Notification.objects.create(user=borrow_request.user, message=message)
-    return redirect('view_borrow_requests')
-
-@login_required
-def notifications(request):
-    user_notifications = request.user.notifications.order_by('-created_at')
-    has_unread = has_unread_notifications(request.user)
-    return render(request, "base/notifications.html", {
-        "notifications": user_notifications,
-        "has_unread": has_unread,
-    })
-
-def has_unread_notifications(user):
-    if user.is_authenticated:
-        return Notification.objects.filter(user=user, is_read=False).exists()
-    return False
-
-@login_required
 def create_item(request):
     if not request.user.is_librarian():
         messages.error(request, "Only librarians can add new items.")
         return redirect('dashboard')
-    
+
     if request.method == 'POST':
         form = ItemForm(request.POST, request.FILES)
         if form.is_valid():
@@ -342,8 +280,30 @@ def create_item(request):
             return redirect('item_detail', identifier=item.identifier)
     else:
         form = ItemForm()
-    
+
     return render(request, 'collections/create_item.html', {'form': form})
+
+@login_required
+def edit_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == "POST":
+        form = ItemForm(request.POST, request.FILES, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Item updated successfully.")
+            return redirect("catalog_manager")
+    else:
+        form = ItemForm(instance=item)
+    return render(request, "collections/edit_item.html", {"form": form, "item": item})
+
+@login_required
+def delete_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    if request.method == "POST":
+        item.delete()
+        messages.success(request, "Item deleted successfully.")
+        return redirect("catalog_manager")
+    return render(request, "collections/delete_item.html", {"item": item})
 
 @login_required
 def create_collection(request):
@@ -352,18 +312,19 @@ def create_collection(request):
         if form.is_valid():
             collection = form.save(commit=False)
             collection.identifier = str(uuid.uuid4())
-            
+
             if not request.user.is_librarian():
                 collection.is_public = True
 
             collection.save()
-            form.save_m2m()  
+            form.save_m2m()
             messages.success(request, "Collection created successfully!")
             return redirect('collection_detail', collection_title=collection.title)
     else:
         form = CollectionForm(user=request.user)
-    
+
     return render(request, 'collections/create_collection.html', {'form': form})
+
 
 @login_required
 def edit_collection(request, identifier):
@@ -377,7 +338,7 @@ def edit_collection(request, identifier):
         form = CollectionForm(request.POST, user=request.user, instance=collection)
         if form.is_valid():
             updated_collection = form.save(commit=False)
-            
+
             # Patron cannot make a collection private
             if request.user.is_patron():
                 updated_collection.is_public = True
@@ -393,6 +354,7 @@ def edit_collection(request, identifier):
         'form': form,
         'collection': collection
     })
+
 
 @login_required
 def delete_collection(request, identifier):
@@ -412,6 +374,7 @@ def delete_collection(request, identifier):
         'collection': collection
     })
 
+# ---------------- Cart system ------------------
 
 @login_required
 def add_to_cart(request, item_id):
@@ -422,12 +385,12 @@ def add_to_cart(request, item_id):
 
     cart = request.session.get('cart', [])
 
-    
     if item_id not in cart:
         cart.append(item_id)
 
     request.session['cart'] = cart
-    return redirect('cart')  
+    return redirect('cart')
+
 
 @login_required
 def remove_from_cart(request, item_id):
@@ -471,8 +434,89 @@ def checkout(request):
 
     return render(request, 'cart/checkout.html', {'items': items})
 
+# ---------------- Renting system ------------------
+
+@login_required
+def borrow_request(request):
+    if request.method == "POST":
+        item_id = request.POST.get("item")
+        item = get_object_or_404(Item, pk=item_id)
+
+        # Prevent duplicate active request
+        existing_request = BorrowRequest.objects.filter(
+            user=request.user,
+            item=item,
+            is_complete=False
+        ).exists()
+
+        if existing_request:
+            messages.warning(request, "You have already requested or are currently borrowing this item.")
+            return redirect('item_detail', identifier=item.identifier)
+
+        BorrowRequest.objects.create(user=request.user, item=item)
+        return render(request, "rentservice/borrow_request_success.html")
+
+    return redirect("dashboard")
+
+@login_required
+def view_borrow_requests(request):
+    if request.method == "POST":
+        request_id = request.POST.get("request_id")
+        action = request.POST.get("action")
+
+        borrow_request = get_object_or_404(BorrowRequest, id=request_id)
+
+        if action == "approve":
+            borrow_request.status = "approved"
+            borrow_request.borrowed_condition = borrow_request.item.condition
+            borrow_request.borrowed_at = timezone.now()
+            borrow_request.is_complete = False  # Still active
+            borrow_request.item.mark_as_borrowed()
+
+            Notification.objects.create(
+                user=borrow_request.user,
+                message=f"Your borrow request for '{borrow_request.item.title}' has been approved!"
+            )
+
+        elif action == "decline":
+            borrow_request.status = "declined"
+            borrow_request.is_complete = True  # Done
+
+            Notification.objects.create(
+                user=borrow_request.user,
+                message=f"Your borrow request for '{borrow_request.item.title}' has been declined."
+            )
+
+        borrow_request.save()
+        return redirect("view_borrow_requests")
+
+    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-timestamp")
+    return render(request, "base/view_request.html", {"requests": requests})
+
+@login_required
+def respond_borrow_request(request, request_id, action):
+    borrow_request = get_object_or_404(BorrowRequest, id=request_id)
+
+    if action == 'approve':
+        borrow_request.status = 'approved'
+        borrow_request.borrowed_condition = borrow_request.item.condition
+        borrow_request.borrowed_at = timezone.now()
+        borrow_request.is_complete = False
+        borrow_request.item.mark_as_borrowed()
+        message = f"Your borrow request for '{borrow_request.item.title}' was approved!"
+
+    elif action == 'decline':
+        borrow_request.status = 'declined'
+        borrow_request.is_complete = True
+        message = f"Your borrow request for '{borrow_request.item.title}' was declined!"
+
+    borrow_request.save()
+    Notification.objects.create(user=borrow_request.user, message=message)
+    return redirect('view_borrow_requests')
+
 @login_required
 def my_items(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
     currently_borrowing = BorrowRequest.objects.filter(
         user=request.user,
         status='approved',
@@ -488,6 +532,24 @@ def my_items(request):
         'currently_borrowing': currently_borrowing,
         'history': history
     })
+
+# Notification
+@login_required
+def notifications(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+
+    user_notifications = request.user.notifications.order_by('-created_at')
+    has_unread = has_unread_notifications(request.user)
+    return render(request, "base/notifications.html", {
+        "notifications": user_notifications,
+        "has_unread": has_unread,
+    })
+
+def has_unread_notifications(user):
+    if user.is_authenticated:
+        return Notification.objects.filter(user=user, is_read=False).exists()
+    return False
+# Notification
 
 @login_required
 def return_item(request, request_id):
@@ -569,6 +631,8 @@ def mark_item_available(request, item_id):
         BorrowRequest.objects.filter(item=item, status="returned", is_complete=False).update(is_complete=True)
     return redirect("quality_assurance")
 
+# ---------------- Request system ------------------
+
 @login_required
 def request_access(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
@@ -592,7 +656,6 @@ def request_access(request, collection_id):
         messages.info(request, "You have already requested or received access.")
 
     return redirect("dashboard")
-
 
 @login_required
 def access_requests(request):
@@ -635,46 +698,4 @@ def upgrade_user(request, user_id):
     user.save()
     messages.success(request, f"{user.username} has been upgraded to librarian.")
     return redirect('dashboard')
-
-@login_required
-def catalog_manager(request):
-    if not request.user.is_librarian():
-        return redirect('dashboard')
-
-    items = Item.objects.all()
-    collections = Collection.objects.all()
-    return render(request, 'base/catalog_manager.html', {
-        'items': items,
-        'collections': collections
-    })
-
-@login_required
-def edit_item(request, item_id):
-    item = get_object_or_404(Item, id=item_id)
-    if request.method == "POST":
-        form = ItemForm(request.POST, request.FILES, instance=item)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Item updated successfully.")
-            return redirect("catalog_manager")
-    else:
-        form = ItemForm(instance=item)
-    return render(request, "collections/edit_item.html", {"form": form, "item": item})
-
-@login_required
-def delete_item(request, item_id):
-    item = get_object_or_404(Item, id=item_id)
-    if request.method == "POST":
-        item.delete()
-        messages.success(request, "Item deleted successfully.")
-        return redirect("catalog_manager")
-    return render(request, "collections/delete_item.html", {"item": item})
-
-def main():
-    for result in get_visible_data_for_user(AnonymousUser()):
-        print(result)
-
-
-for result in get_visible_data_for_user(AnonymousUser()):
-    print(result)
 
