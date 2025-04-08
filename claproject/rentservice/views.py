@@ -668,7 +668,7 @@ def delete_item(request, item_id):
         item.delete()
         messages.success(request, "Item deleted successfully.")
         return redirect("catalog_manager")
-    return render(request, "collections/confirm_delete_item.html", {"item": item})
+    return render(request, "collections/delete_item.html", {"item": item})
 
 @login_required
 def edit_collection(request, collection_id):
