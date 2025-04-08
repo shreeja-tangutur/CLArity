@@ -1,7 +1,8 @@
 #Author: Dongju Park
 #Date: 2/17/2025
-from datetime import timedelta
+import uuid
 
+from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
@@ -98,6 +99,7 @@ class Rating(models.Model):
 
 class Collection(models.Model):
     title = models.CharField(max_length=255)
+    identifier = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     items = models.ManyToManyField(Item, blank=True)
     is_public = models.BooleanField(default=True)

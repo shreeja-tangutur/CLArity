@@ -63,8 +63,8 @@
               {% endif %}
             </td>
             <td>
-                <a href="{% url 'edit_collection' collection.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                <a href="{% url 'delete_collection' collection.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                <a href="{% url 'edit_collection' collection.identifier %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'delete_collection' collection.identifier %}" class="btn btn-sm btn-outline-danger">Delete</a>
             </td>
         </tr>
         {% endfor %}

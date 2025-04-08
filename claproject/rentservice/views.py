@@ -1,4 +1,5 @@
 import os
+import uuid
 import logging
 import slugify
 import openpyxl
@@ -350,6 +351,7 @@ def create_collection(request):
         form = CollectionForm(request.POST, user=request.user)
         if form.is_valid():
             collection = form.save(commit=False)
+            collection.identifier = str(uuid.uuid4())
             
             if not request.user.is_librarian():
                 collection.is_public = True
@@ -364,11 +366,9 @@ def create_collection(request):
     return render(request, 'collections/create_collection.html', {'form': form})
 
 @login_required
-def edit_collection(request, pk):
-    # pk is the primary key of the Collection
-    collection = get_object_or_404(Collection, pk=pk)
+def edit_collection(request, identifier):
+    collection = get_object_or_404(Collection, identifier=identifier)
 
-    # Optionally, only allow the creator or any librarian to edit
     if not request.user.is_librarian() and request.user != collection.creator:
         messages.error(request, "You do not have permission to edit this collection.")
         return redirect('dashboard')
@@ -395,8 +395,8 @@ def edit_collection(request, pk):
     })
 
 @login_required
-def delete_collection(request, pk):
-    collection = get_object_or_404(Collection, pk=pk)
+def delete_collection(request, identifier):
+    collection = get_object_or_404(Collection, identifier=identifier)
 
     # Optionally, only the librarian or the collection creator can delete
     if not request.user.is_librarian() and request.user != collection.creator:
@@ -408,7 +408,7 @@ def delete_collection(request, pk):
         messages.success(request, "Collection deleted successfully!")
         return redirect('dashboard')
 
-    return render(request, 'collections/confirm_delete_collection.html', {
+    return render(request, 'collections/delete_collection.html', {
         'collection': collection
     })
 
@@ -669,28 +669,6 @@ def delete_item(request, item_id):
         messages.success(request, "Item deleted successfully.")
         return redirect("catalog_manager")
     return render(request, "collections/delete_item.html", {"item": item})
-
-@login_required
-def edit_collection(request, collection_id):
-    collection = get_object_or_404(Collection, id=collection_id)
-    if request.method == "POST":
-        form = CollectionForm(request.POST, instance=collection)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Collection updated successfully.")
-            return redirect("catalog_manager")
-    else:
-        form = CollectionForm(instance=collection)
-    return render(request, "collections/edit_collection.html", {"form": form, "collection": collection})
-
-@login_required
-def delete_collection(request, collection_id):
-    collection = get_object_or_404(Collection, id=collection_id)
-    if request.method == "POST":
-        collection.delete()
-        messages.success(request, "Collection deleted successfully.")
-        return redirect("catalog_manager")
-    return render(request, "collections/confirm_delete_collection.html", {"collection": collection})
 
 def main():
     for result in get_visible_data_for_user(AnonymousUser()):
