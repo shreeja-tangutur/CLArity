@@ -5,11 +5,23 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="text-center mt-4">My Profile</h1>
     <div class="mx-auto my-5" style="width: 200px;">
+
+        <div class="text-center mt-4">
+            <h1 class="d-inline-block text-nowrap">
+                {{ request.user.first_name }} {{ request.user.last_name }}
+            </h1>
+        </div>
+        <p class="text-center mb-1"> {{ request.user.email }}</p>
+        <p class="text-center mt-0">Joined {{ request.user.joined_date|date:"F j, Y" }}</p>
+
         <div class="profile-pic">
             {% if profile.profile_picture %}
-                <img id="profile-preview" src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid" width="200">
+                <img id="profile-preview" 
+                     src="{{ profile.profile_picture.url }}"
+                     alt="Profile Picture"
+                     class="img-fluid rounded-circle object-fit-cover"
+                     style="width: 200px; height: 200px; object-fit: cover;">
             {% else %}
                 <svg id="profile-preview" xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
                     <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
@@ -17,14 +29,19 @@
                 </svg>
             {% endif %}
 
-            <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="text-center">
-                    <label for="profile-image-upload">Upload Profile Picture</label>:
-                    <input id="profile-image-upload" type="file" name="profile_picture" accept="image/png, image/jpeg, image/gif" onchange="previewFile()">
-                    <button type="submit" class="btn btn-primary mt-2">Save</button>
-                </div>
-            </form>
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-secondary" onclick="toggleUploadForm()">Change Profile Picture</button>
+
+                <form id="upload-form" method="POST" enctype="multipart/form-data" class="mt-3" style="display: none;">
+                    {% csrf_token %}
+                    <div class="text-center">
+                        <input id="profile-image-upload" type="file" name="profile_picture" 
+                               accept="image/png, image/jpeg, image/gif" 
+                               class="form-control w-100 mb-2">
+                        <button type="submit" class="btn btn-primary mt-2">Save</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     <!-- Back to Home Button -->
@@ -33,5 +50,11 @@
     </div>
 </div>
 
+<script>
+    function toggleUploadForm() {
+      const form = document.getElementById('upload-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
 
 {% endblock content %}

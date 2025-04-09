@@ -26,9 +26,8 @@ with open(file_name, "w") as file:
 # Upload file to S3
 try:
     s3.upload_file(file_name, AWS_STORAGE_BUCKET_NAME, file_name)
-    print(f"✅ File uploaded successfully to S3: {file_name}")
 except Exception as e:
-    print(f"❌ Upload failed: {e}")
+    print(f"Upload failed: {e}")
 
 # Remove the local test file
 os.remove(file_name)

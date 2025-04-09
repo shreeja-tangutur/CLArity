@@ -61,7 +61,7 @@
                 <div class="dropdown">
                     <a class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if request.user.profile.profile_picture %}
-                            <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.first_name }}" class="rounded-circle me-2" style="width:30px; height:30px;">
+                            <img src="{{ request.user.profile.profile_picture.url }}" alt="{{ request.user.first_name }}" class="rounded-circle object-fit-cover me-2" style="width:30px; height:30px; object-fit: cover;">
                         {% else %}
                             <i class="bi bi-person-circle me-2" style="font-size: 1.5rem;"></i>
                         {% endif %}

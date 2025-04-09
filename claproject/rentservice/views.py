@@ -74,10 +74,8 @@ def profile(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST' and 'profile_picture' in request.FILES:
-        print("📨 Upload submitted!")
         profile.profile_picture = request.FILES['profile_picture']
         profile.save()
-        print("✅ Profile picture updated.")
         return redirect('profile')
 
     return render(request, 'base/profile.html', {'profile': profile})
@@ -95,12 +93,9 @@ def dashboard(request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
 
         if request.method == 'POST' and 'profile_picture' in request.FILES:
-            print("📨 POST form submitted")
             profile_picture = request.FILES['profile_picture']
-            print(f"📷 File received: {profile_picture.name}")
             profile.profile_picture = profile_picture
             profile.save()
-            print("✅ Profile picture saved!")
             return redirect('dashboard')
 
         user_type = request.user.role

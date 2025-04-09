@@ -28,6 +28,10 @@ class User(AbstractUser):
         return self.role == 'patron'
 
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+
 class DjangoAdministrator(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -160,11 +164,6 @@ class BorrowRequest(models.Model):
             self.item.status = 'being_inspected'
             self.item.save()
             self.save()
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
-
 
 class BorrowRequest(models.Model):
     STATUS_CHOICES = [
