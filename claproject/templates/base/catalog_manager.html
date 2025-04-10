@@ -27,7 +27,10 @@
             <td>{{ item.condition }}</td>
             <td>
                 <a href="{% url 'edit_item' item.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                <a href="{% url 'delete_item' item.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                <form method="post" action="{% url 'delete_item' item.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>                
             </td>
         </tr>
         {% endfor %}
