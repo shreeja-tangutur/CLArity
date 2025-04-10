@@ -413,21 +413,29 @@ def view_cart(request):
 
 @login_required
 def checkout(request):
-    """
-    Example checkout view that clears the cart.
-    Later, you can create BorrowRequests or other records here.
-    """
-    cart = request.session.get('cart', [])
-    items = Item.objects.filter(id__in=cart)
+    if request.method == "POST":
+        # Get item IDs stored in the session-based cart
+        cart = request.session.get('cart', [])
+        items = Item.objects.filter(id__in=cart)
+        
+        # For each item, create a BorrowRequest using your chosen status (e.g. 'requested')
+        for item in items:
+            BorrowRequest.objects.create(
+                user=request.user,
+                item=item,
+                status='requested'  # Adjust this to match your workflow if needed
+            )
+        
+        # Clear the cart after processing
+        request.session['cart'] = []
+        messages.success(request, "Your borrow request for all selected items has been submitted!")
+        return redirect('dashboard')
+    else:
+        # For GET requests, simply show the checkout template with items in the cart.
+        cart = request.session.get('cart', [])
+        items = Item.objects.filter(id__in=cart)
+        return render(request, 'cart/checkout.html', {'items': items})
 
-    # Example: create BorrowRequests, or do other logic
-    # for item in items:
-    #     BorrowRequest.objects.create(user=request.user, item=item, status='pending')
-
-    # Clear the cart after processing
-    request.session['cart'] = []
-
-    return render(request, 'cart/checkout.html', {'items': items})
 
 # ---------------- Renting system ------------------
 
