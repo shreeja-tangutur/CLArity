@@ -35,7 +35,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = config('SECRET_KEY', default='unsafe-default-key')
 
 # set to true for testing locally
-DEBUG = True
+DEBUG = False
 
 
 ALLOWED_HOSTS = ['localhost','127.0.0.1','staff-build-example.herokuapp.com', 'swe-b26-cla-app-2f731f490027.herokuapp.com']
