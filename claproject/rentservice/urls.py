@@ -12,7 +12,9 @@ urlpatterns = [
     path('cart/', views.view_cart, name='cart'),
     path('cart/add/<int:item_id>/', views.add_to_cart, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('cart/empty/', views.empty_cart, name='empty_cart'),
     path('checkout/', views.checkout, name='checkout'),
+    
 
     # Search & Result
     path('search/', views.search_items, name='search_items'),

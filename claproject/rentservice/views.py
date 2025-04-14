@@ -377,14 +377,15 @@ def add_to_cart(request, item_id):
     Adds the specified Item to the user's session-based cart.
     """
     item = get_object_or_404(Item, id=item_id)
-
     cart = request.session.get('cart', [])
-
     if item_id not in cart:
         cart.append(item_id)
-
     request.session['cart'] = cart
-    return redirect('cart')
+
+    messages.success(request, f"'{item.title}' has been added to your cart!")
+    
+    return redirect('item_detail', identifier=item.identifier)
+
 
 
 @login_required
@@ -397,6 +398,19 @@ def remove_from_cart(request, item_id):
         cart.remove(item_id)
         request.session['cart'] = cart
     return redirect('cart')
+
+@login_required
+def empty_cart(request):
+    """
+    Empties the user's session-based cart.
+    """
+    request.session['cart'] = []
+    
+    from django.contrib import messages
+    messages.success(request, "Your cart has been emptied.")
+    
+    return redirect('cart')
+
 
 
 @login_required
@@ -414,27 +428,24 @@ def view_cart(request):
 @login_required
 def checkout(request):
     if request.method == "POST":
-        # Get item IDs stored in the session-based cart
         cart = request.session.get('cart', [])
         items = Item.objects.filter(id__in=cart)
         
-        # For each item, create a BorrowRequest using your chosen status (e.g. 'requested')
         for item in items:
             BorrowRequest.objects.create(
                 user=request.user,
                 item=item,
-                status='requested'  # Adjust this to match your workflow if needed
+                status='requested'
             )
-        
-        # Clear the cart after processing
+
         request.session['cart'] = []
-        messages.success(request, "Your borrow request for all selected items has been submitted!")
-        return redirect('dashboard')
+
+        return render(request, "rentservice/borrow_request_success.html", {"items": items})
     else:
-        # For GET requests, simply show the checkout template with items in the cart.
         cart = request.session.get('cart', [])
         items = Item.objects.filter(id__in=cart)
         return render(request, 'cart/checkout.html', {'items': items})
+
 
 
 # ---------------- Renting system ------------------
