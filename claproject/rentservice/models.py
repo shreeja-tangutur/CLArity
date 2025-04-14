@@ -131,7 +131,6 @@ class Library(models.Model):
     collections = models.ManyToManyField(Collection, blank=True)
     items = models.ManyToManyField(Item, blank=True)
 
-
 class BorrowRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -139,20 +138,29 @@ class BorrowRequest(models.Model):
         ('denied', 'Denied'),
         ('returned', 'Returned'),
     ]
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
     request_date = models.DateTimeField(auto_now_add=True)
     approved_date = models.DateTimeField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     return_date = models.DateField(null=True, blank=True)
+
+    borrowed_condition = models.IntegerField(null=True, blank=True)
+    returned_condition = models.IntegerField(null=True, blank=True)
+    borrowed_at = models.DateTimeField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
+    is_complete = models.BooleanField(default=False)
 
     def approve(self):
         if self.status == 'pending' and self.item.status == 'available':
             self.status = 'approved'
             self.approved_date = timezone.now()
             self.due_date = timezone.now().date() + timedelta(days=self.item.borrow_period_days)
+            self.borrowed_at = timezone.now()
             self.item.status = 'in_circulation'
             self.item.save()
             self.save()
@@ -162,33 +170,15 @@ class BorrowRequest(models.Model):
             self.status = 'denied'
             self.save()
 
-    def return_item(self): #May have to separate the return to other request
+    def return_item(self):
         if self.status == 'approved':
             self.status = 'returned'
+            self.returned_at = timezone.now()
             self.return_date = timezone.now().date()
             self.item.status = 'being_inspected'
             self.item.save()
+            self.is_complete = True
             self.save()
-
-class BorrowRequest(models.Model):
-    STATUS_CHOICES = [
-        ('requested', 'Requested'),
-        ('approved', 'Approved'),
-        ('declined', 'Declined'),
-        ('returned', 'Returned'),
-    ]
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
-    timestamp = models.DateTimeField(auto_now_add=True) # When the request was first made
-
-    borrowed_condition = models.IntegerField(null=True, blank=True)
-    returned_condition = models.IntegerField(null=True, blank=True)
-    borrowed_at = models.DateTimeField(null=True, blank=True)
-    returned_at = models.DateTimeField(null=True, blank=True)
-
-    is_complete = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} requests {self.item.name}"

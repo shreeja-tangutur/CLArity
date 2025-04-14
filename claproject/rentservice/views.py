@@ -680,24 +680,36 @@ def mark_item_available(request, item_id):
 def request_access(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
 
-    already_requested = CollectionAccessRequest.objects.filter(
-        user=request.user,
-        collection=collection,
-        status='pending'
-    ).exists()
     already_approved = collection.private_users.filter(id=request.user.id).exists()
+    existing_request = CollectionAccessRequest.objects.filter(user=request.user, collection=collection).first()
 
-    if not already_requested and not already_approved:
+    if already_approved:
+        messages.info(request, "You already have access to this collection.")
+
+    elif existing_request:
+        if existing_request.status == "pending":
+            messages.info(request, "You already have a pending access request.")
+        elif existing_request.status == "approved":
+            messages.info(request, "Access already approved.")
+        elif existing_request.status == "denied":
+            existing_request.delete()
+            CollectionAccessRequest.objects.create(
+                user=request.user,
+                collection=collection,
+                status="pending"
+            )
+            messages.success(request, "Your access request has been resubmitted.")
+
+    else:
         CollectionAccessRequest.objects.create(
             user=request.user,
             collection=collection,
-            status='pending'
+            status="pending"
         )
         messages.success(request, "Access request submitted.")
-    else:
-        messages.info(request, "You have already requested or received access.")
 
     return redirect("dashboard")
+
 
 @login_required
 def access_requests(request):
