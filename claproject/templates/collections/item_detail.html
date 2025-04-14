@@ -57,17 +57,23 @@
 
         {% if request.user.is_authenticated %}
           {% if item.status == "available" %}
-            <form method="post" action="{% url 'borrow_request' %}">
+            <!-- Borrow Now Form (immediate single-item borrow request) -->
+            <form method="post" action="{% url 'borrow_request' %}" style="display: inline-block;">
               {% csrf_token %}
               <input type="hidden" name="item" value="{{ item.id }}">
-              <button type="submit" class="borrow-btn">Borrow Request</button>
+              <button type="submit" class="btn-custom btn-borrow me-2">Borrow Now</button>
             </form>
+            <!-- Add to Cart Link (multiple-item process) -->
+            <a href="{% url 'add_to_cart' item.id %}" class="btn-custom btn-cart" style="display: inline-block;">
+              Add to Cart
+            </a>
           {% else %}
-            <button class="borrow-btn" disabled>Not Available</button>
+            <button class="btn btn-secondary" disabled>Not Available</button>
           {% endif %}
         {% else %}
-          <p class="text-muted mt-2">Sign in to borrow this item.</p>
+          <p class="text-muted mt-2">Sign in to borrow or add this item to your cart.</p>
         {% endif %}
+
       </div>
     </div>
   </div>
@@ -134,16 +140,29 @@
     border: 1px solid #e1e1e1;
     background: #fff;
   }
-  .borrow-btn {
-    background-color: #FFA41C;
-    border: none;
+  /* Common button styles for both actions */
+  .btn-custom {
     color: #fff;
     padding: 10px 20px;
     font-size: 1rem;
+    border: none;
     border-radius: 3px;
+    text-decoration: none;
+    display: inline-block;
   }
-  .borrow-btn:hover {
+  /* Orange style for Borrow Now */
+  .btn-borrow {
+    background-color: #FFA41C;
+  }
+  .btn-borrow:hover {
     background-color: #e69500;
+  }
+  /* Blue style for Add to Cart */
+  .btn-cart {
+    background-color: #007bff;
+  }
+  .btn-cart:hover {
+    background-color: #0069d9;
   }
 </style>
 

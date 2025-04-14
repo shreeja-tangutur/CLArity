@@ -1,6 +1,6 @@
 from django import forms
 from .models import BorrowRequest
-from .models import Item, Collection
+from .models import Item, Collection, Tag
 from django.core.exceptions import ValidationError
 
 
@@ -23,6 +23,13 @@ class ItemForm(forms.ModelForm):
         empty_label="No collection",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple
+    )
+
 
     class Meta:
         model = Item

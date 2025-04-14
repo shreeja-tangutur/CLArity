@@ -239,8 +239,11 @@ def search_items(request):
 
         if request.user.is_authenticated and request.user.is_librarian():
             item_results = Item.objects.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)  
             ).distinct()
+
         else:
             items_in_visible_collections = Item.objects.filter(
                 collections__in=visible_item_collections
@@ -250,8 +253,11 @@ def search_items(request):
             visible_items = (items_in_visible_collections | items_without_collections).distinct()
 
             item_results = visible_items.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)  
             ).distinct()
+
 
     return render(request, 'search/search_results.html', {
         'query': query,
@@ -377,14 +383,15 @@ def add_to_cart(request, item_id):
     Adds the specified Item to the user's session-based cart.
     """
     item = get_object_or_404(Item, id=item_id)
-
     cart = request.session.get('cart', [])
-
     if item_id not in cart:
         cart.append(item_id)
-
     request.session['cart'] = cart
-    return redirect('cart')
+
+    messages.success(request, f"'{item.title}' has been added to your cart!")
+    
+    return redirect('item_detail', identifier=item.identifier)
+
 
 
 @login_required
@@ -397,6 +404,19 @@ def remove_from_cart(request, item_id):
         cart.remove(item_id)
         request.session['cart'] = cart
     return redirect('cart')
+
+@login_required
+def empty_cart(request):
+    """
+    Empties the user's session-based cart.
+    """
+    request.session['cart'] = []
+    
+    from django.contrib import messages
+    messages.success(request, "Your cart has been emptied.")
+    
+    return redirect('cart')
+
 
 
 @login_required
@@ -413,21 +433,26 @@ def view_cart(request):
 
 @login_required
 def checkout(request):
-    """
-    Example checkout view that clears the cart.
-    Later, you can create BorrowRequests or other records here.
-    """
-    cart = request.session.get('cart', [])
-    items = Item.objects.filter(id__in=cart)
+    if request.method == "POST":
+        cart = request.session.get('cart', [])
+        items = Item.objects.filter(id__in=cart)
+        
+        for item in items:
+            BorrowRequest.objects.create(
+                user=request.user,
+                item=item,
+                status='requested'
+            )
 
-    # Example: create BorrowRequests, or do other logic
-    # for item in items:
-    #     BorrowRequest.objects.create(user=request.user, item=item, status='pending')
+        request.session['cart'] = []
 
-    # Clear the cart after processing
-    request.session['cart'] = []
+        return render(request, "rentservice/borrow_request_success.html", {"items": items})
+    else:
+        cart = request.session.get('cart', [])
+        items = Item.objects.filter(id__in=cart)
+        return render(request, 'cart/checkout.html', {'items': items})
 
-    return render(request, 'cart/checkout.html', {'items': items})
+
 
 # ---------------- Renting system ------------------
 
