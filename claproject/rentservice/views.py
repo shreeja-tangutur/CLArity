@@ -239,8 +239,11 @@ def search_items(request):
 
         if request.user.is_authenticated and request.user.is_librarian():
             item_results = Item.objects.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)  
             ).distinct()
+
         else:
             items_in_visible_collections = Item.objects.filter(
                 collections__in=visible_item_collections
@@ -250,8 +253,11 @@ def search_items(request):
             visible_items = (items_in_visible_collections | items_without_collections).distinct()
 
             item_results = visible_items.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)  
             ).distinct()
+
 
     return render(request, 'search/search_results.html', {
         'query': query,

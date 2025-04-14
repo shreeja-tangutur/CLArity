@@ -35,6 +35,11 @@ class Profile(models.Model):
 class DjangoAdministrator(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class Item(models.Model):
     title = models.CharField(max_length=255)
@@ -64,6 +69,8 @@ class Item(models.Model):
     collections = models.ManyToManyField('Collection', blank=True)
     deleted = models.BooleanField(default=False)
     condition = models.IntegerField(default=10, validators=[MinValueValidator(1), MaxValueValidator(10)])
+
+    tags = models.ManyToManyField(Tag, blank=True)
 
     def mark_as_available(self):
         self.status = 'available'
@@ -211,3 +218,6 @@ class Notification(models.Model):
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+

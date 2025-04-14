@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import User  # Import your custom User model
 from django.contrib import admin
 from .models import Item, Collection, Notification, BorrowRequest, Comment, Rating, Profile, CollectionAccessRequest
+from .models import Tag
 
 admin.site.register(Item)
 admin.site.register(Collection)
@@ -12,6 +13,8 @@ admin.site.register(Comment)
 admin.site.register(Rating)
 admin.site.register(Profile)
 admin.site.register(CollectionAccessRequest)
+admin.site.register(Tag)
+
 
 
 class CustomUserAdmin(UserAdmin):

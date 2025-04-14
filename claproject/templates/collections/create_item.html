@@ -1,5 +1,6 @@
 {% extends 'base/base.html' %}
 {% load static %}
+
 {% block title %}Create New Item{% endblock title %}
 
 {% block content %}
@@ -7,7 +8,41 @@
     <h1>Create New Item</h1>
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        <!-- Render fields individually for better control -->
+        <div class="mb-3">
+            {{ form.title.label_tag }} {{ form.title }}
+        </div>
+        <div class="mb-3">
+            {{ form.identifier.label_tag }} {{ form.identifier }}
+        </div>
+        <div class="mb-3">
+            {{ form.status.label_tag }} {{ form.status }}
+        </div>
+        <div class="mb-3">
+            {{ form.location.label_tag }} {{ form.location }}
+        </div>
+        <div class="mb-3">
+            {{ form.description.label_tag }} {{ form.description }}
+        </div>
+        <div class="mb-3">
+            {{ form.image.label_tag }} {{ form.image }}
+        </div>
+        <div class="mb-3">
+            {{ form.borrow_period_days.label_tag }} {{ form.borrow_period_days }}
+        </div>
+
+        <div class="mb-3">
+            <label><strong>Tags:</strong></label>
+            {{ form.tags }}
+        </div>
+
+        {% if form.collection %}
+        <div class="mb-3">
+            {{ form.collection.label_tag }} {{ form.collection }}
+        </div>
+        {% endif %}
+
         <button type="submit" class="btn btn-primary">Save Item</button>
     </form>
 </div>
