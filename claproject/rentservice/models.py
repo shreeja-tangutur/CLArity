@@ -66,7 +66,6 @@ class Item(models.Model):
     rating = models.FloatField(default=0.0, validators=[MinValueValidator(1), MaxValueValidator(5)])
     borrow_period_days = models.PositiveIntegerField(default=30)
 
-    collections = models.ManyToManyField('Collection', blank=True)
     deleted = models.BooleanField(default=False)
     condition = models.IntegerField(default=10, validators=[MinValueValidator(1), MaxValueValidator(10)])
 
@@ -96,7 +95,6 @@ class Item(models.Model):
     def __str__(self):
         return self.title
 
-
 class Comment(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -112,7 +110,7 @@ class Collection(models.Model):
     title = models.CharField(max_length=255)
     identifier = models.CharField(max_length=255, unique=True)
     description = models.TextField()
-    items = models.ManyToManyField(Item, blank=True)
+    items = models.ManyToManyField(Item, blank=True, related_name='collections')
     is_public = models.BooleanField(default=True)
     creator = models.ForeignKey(
         User,

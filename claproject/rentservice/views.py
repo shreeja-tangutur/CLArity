@@ -4,7 +4,7 @@ import logging
 import slugify
 import openpyxl
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from .models import Profile, User, Item, Rating, Comment, Notification
 from django.shortcuts import render, redirect, get_object_or_404
@@ -147,6 +147,22 @@ def items_list(request):
     items = Item.objects.filter(deleted=False)
     return render(request, 'search/items_list.html', {'items': items})
 
+@login_required
+def get_available_items(request):
+    is_public = request.GET.get('is_public') == 'true'
+
+    if is_public:
+        private_item_ids = Item.objects.filter(
+            collections__is_public=False
+        ).values_list('id', flat=True)
+        items = Item.objects.exclude(id__in=private_item_ids)
+    else:
+        items = Item.objects.filter(collections__isnull=True)
+
+    return JsonResponse({
+        'items': [{'id': item.id, 'title': item.title} for item in items]
+    })
+
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
 
@@ -287,15 +303,22 @@ def create_item(request):
 @login_required
 def edit_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
+
     if request.method == "POST":
         form = ItemForm(request.POST, request.FILES, instance=item)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Item updated successfully.")
-            return redirect("catalog_manager")
     else:
         form = ItemForm(instance=item)
+
+    if 'collection' in form.fields:
+        del form.fields['collection']
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Item updated successfully.")
+        return redirect("catalog_manager")
+
     return render(request, "collections/edit_item.html", {"form": form, "item": item})
+
 
 @login_required
 def delete_item(request, item_id):

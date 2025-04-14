@@ -48,6 +48,7 @@ urlpatterns = [
     path('collections/create/', views.create_collection, name='create_collection'),
     path('collections/<str:identifier>/edit/', views.edit_collection, name='edit_collection'),
     path('collections/<str:identifier>/delete/', views.delete_collection, name='delete_collection'),
+    path('api/available-items/', views.get_available_items, name='get_available_items'),
 
     # Borrow Request
     path("borrow/", views.borrow_request, name="borrow_request"),

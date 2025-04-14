@@ -2,6 +2,7 @@ from django import forms
 from .models import BorrowRequest
 from .models import Item, Collection, Tag
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 class RatingCommentForm(forms.Form):
@@ -66,7 +67,28 @@ class CollectionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        # If the user is not a librarian, they can only create public collections.
+
+        current_collection = self.instance if self.instance and self.instance.pk else None
+        is_edit_mode = current_collection is not None
+
+        if is_edit_mode:
+            if current_collection.is_public:
+                private_item_ids = Item.objects.filter(
+                    collections__is_public=False
+                ).exclude(
+                    collections=current_collection
+                ).values_list('id', flat=True)
+
+                self.fields['items'].queryset = Item.objects.exclude(
+                    id__in=private_item_ids
+                ).distinct()
+            else:
+                self.fields['items'].queryset = Item.objects.filter(
+                    Q(collections__isnull=True) | Q(collections=current_collection)
+                ).distinct()
+        else:
+            self.fields['items'].queryset = Item.objects.all()
+
         if self.user and not self.user.is_librarian():
             self.fields['is_public'].widget = forms.HiddenInput()
             self.fields['is_public'].initial = True
