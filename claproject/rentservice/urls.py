@@ -18,7 +18,7 @@ urlpatterns = [
 
     # Search & Result
     path('search/', views.search_items, name='search_items'),
-    path('collection/<str:collection_title>/', views.collection_detail, name='collection_detail'),
+    path('collection/<slug:slug>/', views.collection_detail, name='collection_detail'),
     path('item/<str:identifier>/', views.item_detail, name='item_detail'),
 
     # Temporary

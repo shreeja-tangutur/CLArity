@@ -213,9 +213,9 @@ def item_detail(request, identifier):
         'form': form
     })
 
-def collection_detail(request, collection_title):
+def collection_detail(request, slug):
     try:
-        collection = Collection.objects.get(title=collection_title)
+        collection = Collection.objects.get(slug=slug)
     except Collection.DoesNotExist:
         messages.warning(request, "Collection not found.")
         return redirect("dashboard")

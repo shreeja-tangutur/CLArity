@@ -18,7 +18,7 @@
                             <button type="submit" class="btn btn-outline-warning">Request Access</button>
                         </form>
                     {% else %}
-                        <a href="{% url 'collection_detail' collection_title=collection.title %}" class="btn btn-outline-primary">
+                        <a href="{% url 'collection_detail' slug=collection.slug %}" class="btn btn-outline-primary">
                             View {{ collection.title }}
                         </a>
                     {% endif %}

@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.utils.text import slugify
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from typing import List
@@ -109,6 +110,7 @@ class Rating(models.Model):
 
 class Collection(models.Model):
     title = models.CharField(max_length=255)
+    slug = models.SlugField(blank=True, null=True, unique=True)
     identifier = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     items = models.ManyToManyField(Item, blank=True, related_name='collections')
@@ -125,6 +127,17 @@ class Collection(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+            while Collection.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
 
 class Library(models.Model):
