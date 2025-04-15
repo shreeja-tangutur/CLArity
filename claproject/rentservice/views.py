@@ -73,16 +73,20 @@ def sign_out(request):
 def profile(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
-    if request.method == 'POST' and 'profile_picture' in request.FILES:
-        profile.profile_picture = request.FILES['profile_picture']
+    if request.method == 'POST':
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+
+        visible_name = request.POST.get('visible_name')
+        if visible_name is not None:
+            profile.visible_name = visible_name
+
         profile.save()
         return redirect('profile')
 
     return render(request, 'base/profile.html', {'profile': profile})
 
 
-def setting(request):
-    return render(request, 'base/setting.html')
 
 # ------------------ DASHBOARD ------------------
 

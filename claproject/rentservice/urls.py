@@ -26,7 +26,6 @@ urlpatterns = [
 
     # Menu
     path('profile/', views.profile, name='profile'),
-    path('settings/', views.setting, name='setting'),
     path('my-items/', views.my_items, name='my_items'),
     path("quality-assurance/", views.quality_assurance, name="quality_assurance"),
     path('access-requests/', views.access_requests, name='access_requests'),

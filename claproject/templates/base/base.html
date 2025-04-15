@@ -65,11 +65,10 @@
                         {% else %}
                             <i class="bi bi-person-circle me-2" style="font-size: 1.5rem;"></i>
                         {% endif %}
-                        <strong>{{ request.user.first_name }}</strong>
+                        <strong>{{ request.user.profile.visible_name|default:request.user.first_name }}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'setting' %}">Settings</a></li>
                         <li><a class="dropdown-item" href="{% url 'my_items' %}">My Items</a></li>
                         {% if request.user.role == "librarian" %}
                             <li><a class="dropdown-item" href="{% url 'access_requests' %}">Access Requests</a></li>
