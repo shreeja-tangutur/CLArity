@@ -4,12 +4,13 @@
 {% block title %}Create New Item{% endblock title %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+
 <div class="container mt-5">
     <h1>Create New Item</h1>
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <!-- Render fields individually for better control -->
         <div class="mb-3">
             {{ form.title.label_tag }} {{ form.title }}
         </div>
@@ -33,17 +34,65 @@
         </div>
 
         <div class="mb-3">
-            <label><strong>Tags:</strong></label>
+            <label for="tag-input"><strong>Tags:</strong></label>
             {{ form.tags }}
         </div>
 
-        {% if form.collection %}
         <div class="mb-3">
-            {{ form.collection.label_tag }} {{ form.collection }}
+            <label><strong>Available Collections:</strong></label>
+            <div id="collection-checkboxes">
+                {% for collection, checkbox in collection_pairs %}
+                    <div class="form-check mb-1">
+                        <input
+                            class="form-check-input collection-checkbox"
+                            type="checkbox"
+                            name="collections"
+                            id="{{ checkbox.id_for_label }}"
+                            value="{{ checkbox.data.value }}"
+                            data-private="{{ collection.is_public|yesno:'false,true'|lower }}"
+                            {% if checkbox.data.selected %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                            {{ collection.title }}
+                            {% if not collection.is_public %}
+                                <span class="badge bg-warning text-dark ms-1">Private</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-        {% endif %}
 
         <button type="submit" class="btn btn-primary">Save Item</button>
     </form>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tagInput = document.querySelector('#tag-input');
+        if (tagInput) new Tagify(tagInput);
+
+        const checkboxes = document.querySelectorAll('.collection-checkbox');
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function () {
+                const selectedPrivate = [...checkboxes].find(box =>
+                    box.checked && box.dataset.private === 'true'
+                );
+
+                checkboxes.forEach(box => {
+                    if (selectedPrivate) {
+                        if (box !== selectedPrivate) box.disabled = true;
+                    } else {
+                        box.disabled = false;
+                    }
+                });
+            });
+
+            cb.dispatchEvent(new Event('change'));
+        });
+    });
+</script>
 {% endblock content %}
+

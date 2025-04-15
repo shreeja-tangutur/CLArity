@@ -1,6 +1,6 @@
 from django import forms
 from .models import BorrowRequest
-from .models import Item, Collection, Tag
+from .models import Item, Collection, Tag, User
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
@@ -18,19 +18,16 @@ class RatingCommentForm(forms.Form):
     )
 
 class ItemForm(forms.ModelForm):
-    collection = forms.ModelChoiceField(
-        queryset=Collection.objects.all(),
+    tags = forms.CharField(
         required=False,
-        empty_label="No collection",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'tag-input'})
     )
 
-    tags = forms.ModelMultipleChoiceField(
-        queryset=Tag.objects.all(),
+    collections = forms.ModelMultipleChoiceField(
+        queryset=Collection.objects.none(),
         required=False,
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
-
 
     class Meta:
         model = Item
@@ -52,6 +49,19 @@ class ItemForm(forms.ModelForm):
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'borrow_period_days': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        self.user = user
+        super().__init__(*args, **kwargs)
+        if self.user:
+            if self.user.role == 'librarian':
+                self.fields['collections'].queryset = Collection.objects.all()
+            else:
+                self.fields['collections'].queryset = Collection.objects.filter(is_public=True)
+        if self.instance.pk:
+            self.fields['collections'].initial = self.instance.collections.all()
+
 
 class CollectionForm(forms.ModelForm):
     items = forms.ModelMultipleChoiceField(

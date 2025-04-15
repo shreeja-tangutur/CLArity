@@ -59,7 +59,7 @@ class Item(models.Model):
         ('in_circulation', 'In Circulation'),
         ('being_repaired', 'Being Repaired'),
     ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_stock')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     location = models.CharField(max_length=255)
     description = models.TextField()
     image = models.ImageField(upload_to='items/', null=True, blank=True)
@@ -206,6 +206,8 @@ class Notification(models.Model):
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
 
 
 
