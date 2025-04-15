@@ -4,57 +4,89 @@
 {% block title %}Profile{% endblock title %}
 
 {% block content %}
-<div class="container">
-    <div class="mx-auto my-5" style="width: 200px;">
+<div class="container mt-5">
+    <div class="d-flex justify-content-center align-items-start flex-wrap gap-5">
 
-        <div class="text-center mt-4">
-            <h1 class="d-inline-block text-nowrap">
-                {{ request.user.first_name }} {{ request.user.last_name }}
-            </h1>
-        </div>
-        <p class="text-center mb-1"> {{ request.user.email }}</p>
-        <p class="text-center mt-0">Joined {{ request.user.joined_date|date:"F j, Y" }}</p>
-
-        <div class="profile-pic">
+        <!-- Profile Picture Section -->
+        <div class="text-center">
             {% if profile.profile_picture %}
-                <img id="profile-preview" 
-                     src="{{ profile.profile_picture.url }}"
+                <img src="{{ profile.profile_picture.url }}"
                      alt="Profile Picture"
-                     class="img-fluid rounded-circle object-fit-cover"
+                     class="img-fluid rounded-circle"
                      style="width: 200px; height: 200px; object-fit: cover;">
             {% else %}
-                <svg id="profile-preview" xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" fill="currentColor"
+                     class="bi bi-person-circle" viewBox="0 0 16 16">
                     <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                    <path fill-rule="evenodd"
+                          d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10
+                          8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
                 </svg>
             {% endif %}
+        </div>
 
-            <div class="text-center mt-4">
-                <button class="btn btn-outline-secondary" onclick="toggleUploadForm()">Change Profile Picture</button>
+        <!-- Profile Info & Controls -->
+        <div class="d-flex flex-column align-items-start" style="min-width: 280px;">
 
-                <form id="upload-form" method="POST" enctype="multipart/form-data" class="mt-3" style="display: none;">
+            <!-- Username Block -->
+            <div class="d-flex align-items-center mb-2">
+                <h2 id="visible-username" class="fw-bold me-2">
+                    {{ profile.visible_name|default:request.user.first_name }}
+                </h2>
+                <form method="POST" enctype="multipart/form-data" style="display: inline;">
                     {% csrf_token %}
-                    <div class="text-center">
-                        <input id="profile-image-upload" type="file" name="profile_picture" 
-                               accept="image/png, image/jpeg, image/gif" 
-                               class="form-control w-100 mb-2">
-                        <button type="submit" class="btn btn-primary mt-2">Save</button>
-                    </div>
+                    <button type="button" id="edit-name-btn" class="btn btn-outline-secondary btn-sm p-1">
+                        <i class="bi bi-pencil"></i>
+                    </button>
                 </form>
             </div>
+
+            <!-- Edit Username Form -->
+            <form method="POST" id="edit-name-form" style="display: none;" class="mb-2">
+                {% csrf_token %}
+                <div class="d-flex align-items-center">
+                    <input type="text" name="visible_name" class="form-control me-2" style="width: 150px;" value="{{ profile.visible_name|default:request.user.first_name }}">
+                    <button type="submit" class="btn btn-primary btn-sm me-2">Save</button>
+                    <button type="button" id="cancel-edit-name" class="btn btn-secondary btn-sm">Cancel</button>
+                </div>
+            </form>
+
+            <p class="mb-1">{{ request.user.email }}</p>
+            <p class="mb-3">Joined {{ request.user.joined_date|date:"F j, Y" }}</p>
+
+            <!-- Change Profile Picture Button -->
+            <button class="btn btn-outline-secondary mb-2" onclick="toggleProfileUpload()">Change Profile Picture</button>
+
+            <!-- Profile Picture Upload Form -->
+            <form method="POST" enctype="multipart/form-data" id="profile-upload-form" style="display: none;">
+                {% csrf_token %}
+                <input type="file" name="profile_picture" class="form-control mb-2" accept="image/png, image/jpeg, image/gif">
+                <button type="submit" class="btn btn-primary btn-sm me-2">Save</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleProfileUpload()">Cancel</button>
+            </form>
+
+            <!-- Back to Home -->
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-2">Back to Home</a>
         </div>
-    </div>
-    <!-- Back to Home Button -->
-    <div class="text-center mt-4">
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Home</a>
     </div>
 </div>
 
 <script>
-    function toggleUploadForm() {
-      const form = document.getElementById('upload-form');
-      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    document.getElementById("edit-name-btn").addEventListener("click", function () {
+        document.getElementById("visible-username").style.display = "none";
+        document.getElementById("edit-name-btn").style.display = "none";
+        document.getElementById("edit-name-form").style.display = "block";
+    });
+
+    document.getElementById("cancel-edit-name").addEventListener("click", function () {
+        document.getElementById("visible-username").style.display = "inline-block";
+        document.getElementById("edit-name-btn").style.display = "inline-block";
+        document.getElementById("edit-name-form").style.display = "none";
+    });
+
+    function toggleProfileUpload() {
+        const form = document.getElementById("profile-upload-form");
+        form.style.display = form.style.display === "none" ? "block" : "none";
     }
 </script>
-
 {% endblock content %}
