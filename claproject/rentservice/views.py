@@ -495,7 +495,7 @@ def borrow_request(request):
             messages.warning(request, "You have already requested or are currently borrowing this item.")
             return redirect('item_detail', identifier=item.identifier)
 
-        BorrowRequest.objects.create(user=request.user, item=item)
+        BorrowRequest.objects.create(user=request.user, item=item, status='requested')
         return render(request, "rentservice/borrow_request_success.html")
 
     return redirect("dashboard")

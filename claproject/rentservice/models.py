@@ -133,7 +133,7 @@ class Library(models.Model):
 
 class BorrowRequest(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
+        ('requested', 'Requested'),
         ('approved', 'Approved'),
         ('denied', 'Denied'),
         ('returned', 'Returned'),
