@@ -281,7 +281,6 @@ def search_items(request):
         'collection_results': collection_results,
     })
 
-
 @login_required
 def create_item(request):
     if not request.user.is_librarian():
@@ -533,7 +532,7 @@ def view_borrow_requests(request):
         borrow_request.save()
         return redirect("view_borrow_requests")
 
-    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-timestamp")
+    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-request_date")
     return render(request, "base/view_request.html", {"requests": requests})
 
 @login_required
