@@ -391,7 +391,7 @@ def create_collection(request):
             collection.save()
             form.save_m2m()
             messages.success(request, "Collection created successfully!")
-            return redirect('collection_detail', collection_title=collection.title)
+            return redirect('collection_detail',slug=collection.slug)
     else:
         form = CollectionForm(user=request.user)
 
@@ -418,7 +418,7 @@ def edit_collection(request, identifier):
             updated_collection.save()
             form.save_m2m()
             messages.success(request, "Collection updated successfully!")
-            return redirect('collection_detail', collection_title=updated_collection.title)
+            return redirect('collection_detail', slug=updated_collection.slug)
     else:
         form = CollectionForm(user=request.user, instance=collection)
 
