@@ -306,15 +306,14 @@ def create_item(request):
     if request.method == "POST":
         form = ItemForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            item = form.save()
+            item = form.save(commit=False)
+            item.identifier = str(uuid.uuid4())
+            item.save()
 
             tag_string = form.cleaned_data.get('tags', '')
             tag_names = [name.strip() for name in tag_string.split(',') if name.strip()]
             tags = [Tag.objects.get_or_create(name=name)[0] for name in tag_names]
             item.tags.set(tags)
-
-            print("Collections in cleaned_data:", form.cleaned_data.get('collections'))
-
             item.collections.set(form.cleaned_data.get('collections', []))
 
             messages.success(request, "Item created successfully!")

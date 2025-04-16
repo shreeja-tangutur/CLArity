@@ -33,7 +33,6 @@ class ItemForm(forms.ModelForm):
         model = Item
         fields = [
             'title',
-            'identifier',
             'status',
             'location',
             'description',
@@ -42,7 +41,6 @@ class ItemForm(forms.ModelForm):
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'identifier': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
