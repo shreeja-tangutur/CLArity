@@ -75,23 +75,35 @@
 
         const checkboxes = document.querySelectorAll('.collection-checkbox');
 
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', function () {
-                const selectedPrivate = [...checkboxes].find(box =>
-                    box.checked && box.dataset.private === 'true'
-                );
+        function updateCheckboxStates() {
+            let privateSelected = false;
+            let publicSelected = false;
 
-                checkboxes.forEach(box => {
-                    if (selectedPrivate) {
-                        if (box !== selectedPrivate) box.disabled = true;
-                    } else {
-                        box.disabled = false;
-                    }
-                });
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    if (cb.dataset.private === 'true') privateSelected = true;
+                    else publicSelected = true;
+                }
             });
 
-            cb.dispatchEvent(new Event('change'));
+            checkboxes.forEach(cb => {
+                const isPrivate = cb.dataset.private === 'true';
+
+                if (privateSelected) {
+                    cb.disabled = !cb.checked;
+                } else if (publicSelected && isPrivate) {
+                    cb.disabled = true;
+                } else {
+                    cb.disabled = false;
+                }
+            });
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateCheckboxStates);
         });
+
+        updateCheckboxStates();
     });
 </script>
 {% endblock content %}
