@@ -12,7 +12,7 @@
         <ul class="list-group mb-4">
           {% for collection in collection_results %}
             <li class="list-group-item">
-              <a href="{% url 'collection_detail' collection.title %}">
+              <a href="{% url 'collection_detail' slug=collection.slug %}">
                 {{ collection.title }} - {{ collection.description|truncatechars:60 }}
               </a>
             </li>

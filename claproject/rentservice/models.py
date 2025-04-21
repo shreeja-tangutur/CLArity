@@ -13,6 +13,8 @@ from typing import List
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.utils.text import slugify
+
     
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -122,8 +124,12 @@ class Collection(models.Model):
         null=True, 
         blank=True
     )
-    
     private_users = models.ManyToManyField(User, blank=True, related_name='private_collections')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
