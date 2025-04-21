@@ -57,7 +57,13 @@ urlpatterns = [
     path('upgrade-user/<int:user_id>/', views.upgrade_user, name='upgrade_user'),
 
     # Notification
-    path("notifications/", views.notifications, name="notifications")
+    path("notifications/", views.notifications, name="notifications"),
+
+    # Comment & Rating
+    path('comment/<int:comment_id>/edit/', views.edit_comment, name='edit_comment'),
+    path('comment/<int:comment_id>/delete/', views.delete_review, name='delete_comment'),
+
+
 
 
 ]

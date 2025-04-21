@@ -176,17 +176,26 @@ def get_available_items(request):
         'items': [{'id': item.id, 'title': item.title} for item in items]
     })
 
+@login_required
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
 
-    # Calculate rating
     ratings = item.ratings.all()
     avg_rating = round(ratings.aggregate(Avg('score'))['score__avg'] or 0, 1)
-
-    # Comments retrieving
     recent_comments = item.comments.order_by('-created_at')[:5]
 
+    for comment in recent_comments:
+        user_rating = ratings.filter(user=comment.user).first()
+        comment.user_score = user_rating.score if user_rating else 0
+
+    existing_rating = item.ratings.filter(user=request.user).first()
+    existing_comment = item.comments.filter(user=request.user).first()
+
     if request.method == 'POST':
+        if existing_rating and existing_comment:
+            messages.error(request, "You have already submitted a review for this item.")
+            return redirect('item_detail', identifier=item.identifier)
+
         form = RatingCommentForm(request.POST)
         if form.is_valid():
             Rating.objects.update_or_create(
@@ -194,13 +203,13 @@ def item_detail(request, identifier):
                 item=item,
                 defaults={'score': form.cleaned_data['score']}
             )
-
-            Comment.objects.create(
-                user=request.user,
-                item=item,
-                text=form.cleaned_data['text']
-            )
-
+            text = form.cleaned_data['text']
+            if text:
+                Comment.objects.create(
+                    user=request.user,
+                    item=item,
+                    text=text
+                )
             messages.success(request, "Thanks for your rating and comment!")
             return redirect('item_detail', identifier=item.identifier)
     else:
@@ -210,8 +219,41 @@ def item_detail(request, identifier):
         'item': item,
         'avg_rating': avg_rating,
         'recent_comments': recent_comments,
-        'form': form
+        'form': form,
+        'existing_comment': existing_comment,
     })
+
+
+@login_required
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id, user=request.user)
+    item = comment.item
+
+    if request.method == 'POST':
+        new_text = request.POST.get('text', '').strip()
+        new_score = request.POST.get('score')
+        if new_text and new_score:
+            comment.text = new_text
+            comment.save()
+            Rating.objects.update_or_create(
+                user=request.user,
+                item=item,
+                defaults={'score': int(new_score)}
+            )
+            messages.success(request, "Your comment and rating were updated.")
+        return redirect('item_detail', identifier=item.identifier)
+
+
+@login_required
+def delete_review(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id, user=request.user)
+    item = comment.item
+
+    Rating.objects.filter(user=request.user, item=item).delete()
+    comment.delete()
+
+    messages.success(request, "Your review has been deleted.")
+    return redirect('item_detail', identifier=item.identifier)
 
 def collection_detail(request, slug):
     try:

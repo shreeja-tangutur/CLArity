@@ -13,6 +13,7 @@ class RatingCommentForm(forms.Form):
     )
     text = forms.CharField(
         label='Leave a Comment',
+        required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         max_length=500
     )
