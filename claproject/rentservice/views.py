@@ -264,11 +264,7 @@ def collection_detail(request, slug):
     has_access = False
     access_pending = False
 
-    if not collection.is_public:
-        if not request.user.is_authenticated:
-            messages.warning(request, "You don't have permission to view this collection.")
-            return redirect("dashboard")
-
+    if request.user.is_authenticated:
         if request.user in collection.private_users.all():
             has_access = True
         else:
@@ -277,14 +273,14 @@ def collection_detail(request, slug):
                 collection=collection,
                 status="pending"
             ).first()
-
             if existing_request:
                 access_pending = True
 
-            # Only librarians and users with access can view items
-            if not has_access and not request.user.is_librarian():
-                messages.warning(request, "You don't have permission to view this collection.")
-                return redirect("dashboard")
+    # Permission check for private collections
+    if not collection.is_public:
+        if not request.user.is_authenticated or (not request.user.is_librarian() and not has_access):
+            messages.warning(request, "You don't have permission to view this collection.")
+            return redirect("dashboard")
 
     visible_items = collection.items.all()
 
