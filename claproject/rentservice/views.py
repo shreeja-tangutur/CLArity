@@ -605,19 +605,19 @@ def view_borrow_requests(request):
             borrow_request.is_complete = False  # Still active
             borrow_request.item.mark_as_borrowed()
 
-            Notification.objects.create(
-                user=borrow_request.user,
-                message=f"Your borrow request for '{borrow_request.item.title}' has been approved!"
-            )
+            # Notification.objects.create(
+            #     user=borrow_request.user,
+            #     message=f"Your borrow request for '{borrow_request.item.title}' has been approved!"
+            # )
 
         elif action == "decline":
             borrow_request.status = "declined"
             borrow_request.is_complete = True  # Done
 
-            Notification.objects.create(
-                user=borrow_request.user,
-                message=f"Your borrow request for '{borrow_request.item.title}' has been declined."
-            )
+            # Notification.objects.create(
+            #     user=borrow_request.user,
+            #     message=f"Your borrow request for '{borrow_request.item.title}' has been declined."
+            # )
 
         borrow_request.save()
         return redirect("view_borrow_requests")
@@ -643,7 +643,7 @@ def respond_borrow_request(request, request_id, action):
         message = f"Your borrow request for '{borrow_request.item.title}' was declined!"
 
     borrow_request.save()
-    Notification.objects.create(user=borrow_request.user, message=message)
+    #Notification.objects.create(user=borrow_request.user, message=message)
     return redirect('view_borrow_requests')
 
 @login_required
@@ -693,6 +693,7 @@ def return_item(request, request_id):
     borrow_request.item.mark_as_being_inspected()
     borrow_request.item.save()
     borrow_request.save()
+    messages.success(request, "Item returned successfully!")
     return redirect('my_items')
 
 @login_required
@@ -797,7 +798,7 @@ def request_access(request, collection_id):
         )
         messages.success(request, "Access request submitted.")
 
-    return redirect("dashboard")
+    return redirect("collection_detail", slug=collection.slug)
 
 
 @login_required
