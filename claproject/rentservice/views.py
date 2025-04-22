@@ -816,7 +816,7 @@ def request_access(request, collection_id):
         )
         messages.success(request, "Access request submitted.")
 
-    return redirect("collection_detail", slug=collection.slug)
+    return redirect("dashboard")
 
 
 @login_required
