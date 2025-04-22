@@ -14,21 +14,6 @@
     {% endif %}
 
     <p class="lead text-center">{{ collection.description }}</p>
-    {% if not collection.is_public and request.user.is_authenticated and request.user.is_patron %}
-        <div class="text-center my-3">
-            {% if request.user in collection.private_users.all %}
-                <p class="text-success"> You have access to this private collection.</p>
-            {% elif collection.collectionaccessrequest_set.filter(user=request.user, status="pending").exists %}
-                <button class="btn btn-secondary" disabled>Access Requested</button>
-            {% else %}
-                <form method="post" action="{% url 'request_access' collection.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">Request Access</button>
-                </form>
-            {% endif %}
-        </div>
-    {% endif %}
-
 
     <hr>
     <h2 class="text-center mb-4">Items in this Collection</h2>
