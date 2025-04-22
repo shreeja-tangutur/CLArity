@@ -6,7 +6,7 @@ import openpyxl
 
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
-from .models import Profile, User, Item, Rating, Comment, Notification, Tag
+from .models import Profile, User, Item, Rating, Comment, Notification, Tag, CollectionAccessRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
@@ -16,7 +16,6 @@ from .forms import CollectionForm, ItemForm, RatingCommentForm
 from .models import Item, Collection, BorrowRequest, CollectionAccessRequest
 from django.db.models import Avg, Q, Count
 from django.utils import timezone
-
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
 
@@ -262,18 +261,38 @@ def collection_detail(request, slug):
         messages.warning(request, "Collection not found.")
         return redirect("dashboard")
 
+    has_access = False
+    access_pending = False
+
     if not collection.is_public:
-        if not request.user.is_authenticated or \
-           (request.user.role == 'patron' and request.user not in collection.private_users.all()) or \
-           (request.user.role != 'librarian' and request.user.role != 'patron'):
+        if not request.user.is_authenticated:
             messages.warning(request, "You don't have permission to view this collection.")
             return redirect("dashboard")
+
+        if request.user in collection.private_users.all():
+            has_access = True
+        else:
+            existing_request = CollectionAccessRequest.objects.filter(
+                user=request.user,
+                collection=collection,
+                status="pending"
+            ).first()
+
+            if existing_request:
+                access_pending = True
+
+            # Only librarians and users with access can view items
+            if not has_access and not request.user.is_librarian():
+                messages.warning(request, "You don't have permission to view this collection.")
+                return redirect("dashboard")
 
     visible_items = collection.items.all()
 
     return render(request, "collections/collection_detail.html", {
         "collection": collection,
-        "items": visible_items
+        "items": visible_items,
+        "has_access": has_access,
+        "access_pending": access_pending
     })
 
 
