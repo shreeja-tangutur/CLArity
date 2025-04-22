@@ -788,7 +788,7 @@ def request_access(request, collection_id):
                 status="pending"
             )
             messages.success(request, "Your access request has been resubmitted.")
-
+            
     else:
         CollectionAccessRequest.objects.create(
             user=request.user,

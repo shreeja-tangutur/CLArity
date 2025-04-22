@@ -24,7 +24,7 @@
             <td>{{ request.borrowed_condition }}</td>
             <td>—</td>
             <td>
-                <form method="post" action="{% url 'return_item' request.id %}">
+                <form method="post" action="{% url 'return_item' request.id %}" onsubmit="return confirm('Are you sure you want to return this item?');">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-warning btn-sm">Return</button>
                 </form>
