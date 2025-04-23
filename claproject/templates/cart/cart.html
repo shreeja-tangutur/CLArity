@@ -49,7 +49,7 @@
     </div>
     <!-- Right Column (Empty Cart) -->
     <div class="col text-end">
-      <form method="post" action="{% url 'empty_cart' %}" onsubmit="return confirm('Are you sure you want to empty your cart?');">
+      <form method="post" action="{% url 'empty_cart' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">
           Empty Cart
