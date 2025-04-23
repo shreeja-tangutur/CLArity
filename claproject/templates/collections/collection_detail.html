@@ -5,7 +5,9 @@
 
 {% block content %}
 <div class="container my-5">
-    <h1 class="text-center mb-4">{{ collection.title }}</h1>
+    <h1 class="text-center mb-1">{{ collection.title }}</h1>
+    <p class="text-center text-muted mb-4">Created by: {{ collection.creator.username|default:"Unknown" }}</p>
+
 
     {% if collection.image %}
         <div class="text-center mb-4">
@@ -16,6 +18,15 @@
     <p class="lead text-center">{{ collection.description }}</p>
 
     <hr>
+
+    <!-- Search Form -->
+    <form method="GET" class="mb-4 text-center">
+        <div class="input-group" style="max-width: 500px; margin: 0 auto;">
+            <input type="text" name="q" class="form-control" placeholder="Search items in this collection..." value="{{ query }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+  
     <h2 class="text-center mb-4">Items in this Collection</h2>
 
     {% if items %}

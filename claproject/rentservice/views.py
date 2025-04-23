@@ -271,9 +271,16 @@ def collection_detail(request, slug):
 
     visible_items = collection.items.all()
 
+    query = request.GET.get('q', '').strip()
+    if query:
+        visible_items = visible_items.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        )
+
     return render(request, "collections/collection_detail.html", {
         "collection": collection,
-        "items": visible_items
+        "items": visible_items,
+        "query": query,  
     })
 
 
@@ -425,6 +432,7 @@ def create_collection(request):
         if form.is_valid():
             collection = form.save(commit=False)
             collection.identifier = str(uuid.uuid4())
+            collection.creator = request.user
 
             if not request.user.is_librarian():
                 collection.is_public = True

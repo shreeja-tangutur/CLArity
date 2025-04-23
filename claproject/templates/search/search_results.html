@@ -11,11 +11,12 @@
         <h3>Collections</h3>
         <ul class="list-group mb-4">
           {% for collection in collection_results %}
-            <li class="list-group-item">
-              <a href="{% url 'collection_detail' slug=collection.slug %}">
-                {{ collection.title }} - {{ collection.description|truncatechars:60 }}
-              </a>
-            </li>
+          <li class="list-group-item">
+            <a href="{% url 'collection_detail' slug=collection.slug %}">
+              {{ collection.title }} - {{ collection.description|truncatechars:60 }}
+            </a>
+            <div class="text-muted">Created by: {{ collection.creator.username|default:"Unknown" }}</div>
+          </li>
           {% endfor %}
         </ul>
       {% endif %}

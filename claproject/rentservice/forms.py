@@ -19,10 +19,12 @@ class RatingCommentForm(forms.Form):
     )
 
 class ItemForm(forms.ModelForm):
-    tags = forms.CharField(
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'tag-input'})
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
+    
 
     collections = forms.ModelMultipleChoiceField(
         queryset=Collection.objects.none(),
@@ -39,6 +41,7 @@ class ItemForm(forms.ModelForm):
             'description',
             'image',
             'borrow_period_days',
+            'tags'
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
