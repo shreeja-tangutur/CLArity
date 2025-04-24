@@ -10,7 +10,7 @@ from django.utils.text import slugify
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from typing import List
-
+from django.db.models import Q, UniqueConstraint
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils.text import slugify
@@ -158,6 +158,14 @@ class BorrowRequest(models.Model):
         ('denied', 'Denied'),
         ('returned', 'Returned'),
     ]
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=['user', 'item'],
+                condition=Q(is_complete=False),
+                name='unique_active_borrow_request'
+            ),
+        ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
