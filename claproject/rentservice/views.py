@@ -190,6 +190,7 @@ def item_detail(request, identifier):
 
     existing_rating = item.ratings.filter(user=request.user).first()
     existing_comment = item.comments.filter(user=request.user).first()
+    in_cart = item.id in request.session.get('cart', [])
 
     if request.method == 'POST':
         if existing_rating and existing_comment:
@@ -221,6 +222,7 @@ def item_detail(request, identifier):
         'recent_comments': recent_comments,
         'form': form,
         'existing_comment': existing_comment,
+        'in_cart': in_cart,
     })
 
 
@@ -558,11 +560,17 @@ def checkout(request):
         items = Item.objects.filter(id__in=cart)
         
         for item in items:
-            BorrowRequest.objects.create(
-                user=request.user,
-                item=item,
-                status='requested'
-            )
+            # Skip if there's already an active borrow request
+            if not BorrowRequest.objects.filter(
+                    user=request.user,
+                    item=item,
+                    is_complete=False
+                ).exists():
+                BorrowRequest.objects.create(
+                    user=request.user,
+                    item=item,
+                    status='requested'
+                )
 
         request.session['cart'] = []
 
@@ -593,10 +601,16 @@ def borrow_request(request):
             messages.warning(request, "You have already requested or are currently borrowing this item.")
             return redirect('item_detail', identifier=item.identifier)
 
+        # Create the borrow request
         BorrowRequest.objects.create(user=request.user, item=item, status='requested')
+        cart = request.session.get('cart', [])
+        if item.id in cart:
+            cart.remove(item.id)
+            request.session['cart'] = cart
         return render(request, "rentservice/borrow_request_success.html")
 
     return redirect("dashboard")
+
 
 @login_required
 def view_borrow_requests(request):
