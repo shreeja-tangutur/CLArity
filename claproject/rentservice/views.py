@@ -4,9 +4,9 @@ import logging
 import slugify
 import openpyxl
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
-from .models import Profile, User, Item, Rating, Comment, Notification
+from .models import Profile, User, Item, Rating, Comment, Notification, Tag
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, AnonymousUser
 from .forms import CollectionForm, ItemForm, RatingCommentForm
 from .models import Item, Collection, BorrowRequest, CollectionAccessRequest
-from django.db.models import Avg
+from django.db.models import Avg, Q, Count
 from django.utils import timezone
 
 from django.contrib.auth.forms import AuthenticationForm
@@ -73,16 +73,20 @@ def sign_out(request):
 def profile(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
 
-    if request.method == 'POST' and 'profile_picture' in request.FILES:
-        profile.profile_picture = request.FILES['profile_picture']
+    if request.method == 'POST':
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+
+        visible_name = request.POST.get('visible_name')
+        if visible_name is not None:
+            profile.visible_name = visible_name
+
         profile.save()
         return redirect('profile')
 
     return render(request, 'base/profile.html', {'profile': profile})
 
 
-def setting(request):
-    return render(request, 'base/setting.html')
 
 # ------------------ DASHBOARD ------------------
 
@@ -93,8 +97,7 @@ def dashboard(request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
 
         if request.method == 'POST' and 'profile_picture' in request.FILES:
-            profile_picture = request.FILES['profile_picture']
-            profile.profile_picture = profile_picture
+            profile.profile_picture = request.FILES['profile_picture']
             profile.save()
             return redirect('dashboard')
 
@@ -107,11 +110,16 @@ def dashboard(request):
 
     data = get_visible_data_for_user(request.user)
 
+    if request.user.is_authenticated and request.user.role == 'patron':
+        collections = Collection.objects.all()  # Include private
+    else:
+        collections = data['collections']
+
     return render(request, 'dashboard/dashboard.html', {
         'user_type': user_type,
         'profile': profile,
         'items': data['items'],
-        'collections': data['collections'],
+        'collections': collections,
         'patrons': patrons,
         "has_unread": has_unread_notifications(request.user),
     })
@@ -119,18 +127,23 @@ def dashboard(request):
 
 def get_visible_data_for_user(user):
     public_collections = Collection.objects.filter(is_public=True)
-    private_collections = Collection.objects.filter(is_public=False)
-
-    items_not_in_any_collection = Item.objects.filter(collections=None)
-    items_in_public_collections = Item.objects.filter(collections__in=public_collections)
 
     if not user.is_authenticated:
         visible_collections = public_collections
-        visible_items = (items_not_in_any_collection | items_in_public_collections).distinct()
+        visible_items = Item.objects.filter(
+            Q(collections__isnull=True) |
+            Q(collections__in=public_collections)
+        ).distinct()
 
     elif user.role == 'patron':
-        visible_collections = (public_collections | private_collections).distinct()
-        visible_items = (items_not_in_any_collection | items_in_public_collections).distinct()
+        private_collections_shared = Collection.objects.filter(is_public=False, private_users=user)
+        visible_collections = (public_collections | private_collections_shared).distinct()
+
+        visible_items = Item.objects.filter(
+            Q(collections__isnull=True) |
+            Q(collections__in=public_collections) |
+            Q(collections__in=private_collections_shared)
+        ).distinct()
 
     elif user.role == 'librarian':
         visible_collections = Collection.objects.all()
@@ -147,17 +160,42 @@ def items_list(request):
     items = Item.objects.filter(deleted=False)
     return render(request, 'search/items_list.html', {'items': items})
 
+@login_required
+def get_available_items(request):
+    is_public = request.GET.get('is_public') == 'true'
+
+    if is_public:
+        private_item_ids = Item.objects.filter(
+            collections__is_public=False
+        ).values_list('id', flat=True)
+        items = Item.objects.exclude(id__in=private_item_ids)
+    else:
+        items = Item.objects.filter(collections__isnull=True)
+
+    return JsonResponse({
+        'items': [{'id': item.id, 'title': item.title} for item in items]
+    })
+
+@login_required
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
 
-    # Calculate rating
     ratings = item.ratings.all()
     avg_rating = round(ratings.aggregate(Avg('score'))['score__avg'] or 0, 1)
-
-    # Comments retrieving
     recent_comments = item.comments.order_by('-created_at')[:5]
 
+    for comment in recent_comments:
+        user_rating = ratings.filter(user=comment.user).first()
+        comment.user_score = user_rating.score if user_rating else 0
+
+    existing_rating = item.ratings.filter(user=request.user).first()
+    existing_comment = item.comments.filter(user=request.user).first()
+
     if request.method == 'POST':
+        if existing_rating and existing_comment:
+            messages.error(request, "You have already submitted a review for this item.")
+            return redirect('item_detail', identifier=item.identifier)
+
         form = RatingCommentForm(request.POST)
         if form.is_valid():
             Rating.objects.update_or_create(
@@ -165,13 +203,13 @@ def item_detail(request, identifier):
                 item=item,
                 defaults={'score': form.cleaned_data['score']}
             )
-
-            Comment.objects.create(
-                user=request.user,
-                item=item,
-                text=form.cleaned_data['text']
-            )
-
+            text = form.cleaned_data['text']
+            if text:
+                Comment.objects.create(
+                    user=request.user,
+                    item=item,
+                    text=text
+                )
             messages.success(request, "Thanks for your rating and comment!")
             return redirect('item_detail', identifier=item.identifier)
     else:
@@ -181,23 +219,70 @@ def item_detail(request, identifier):
         'item': item,
         'avg_rating': avg_rating,
         'recent_comments': recent_comments,
-        'form': form
+        'form': form,
+        'existing_comment': existing_comment,
     })
 
-def collection_detail(request, collection_title):
-    visible_data = get_visible_data_for_user(request.user)
-    collection = visible_data["collections"].filter(title=collection_title).first()
 
-    if not collection:
-        messages.warning(request, "You don't have permission to view this collection.")
+@login_required
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id, user=request.user)
+    item = comment.item
+
+    if request.method == 'POST':
+        new_text = request.POST.get('text', '').strip()
+        new_score = request.POST.get('score')
+        if new_text and new_score:
+            comment.text = new_text
+            comment.save()
+            Rating.objects.update_or_create(
+                user=request.user,
+                item=item,
+                defaults={'score': int(new_score)}
+            )
+            messages.success(request, "Your comment and rating were updated.")
+        return redirect('item_detail', identifier=item.identifier)
+
+
+@login_required
+def delete_review(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id, user=request.user)
+    item = comment.item
+
+    Rating.objects.filter(user=request.user, item=item).delete()
+    comment.delete()
+
+    messages.success(request, "Your review has been deleted.")
+    return redirect('item_detail', identifier=item.identifier)
+
+def collection_detail(request, slug):
+    try:
+        collection = Collection.objects.get(slug=slug)
+    except Collection.DoesNotExist:
+        messages.warning(request, "Collection not found.")
         return redirect("dashboard")
 
-    visible_items = collection.items.filter(id__in=visible_data["items"].values_list('id', flat=True))
+    if not collection.is_public:
+        if not request.user.is_authenticated or \
+           (request.user.role == 'patron' and request.user not in collection.private_users.all()) or \
+           (request.user.role != 'librarian' and request.user.role != 'patron'):
+            messages.warning(request, "You don't have permission to view this collection.")
+            return redirect("dashboard")
+
+    visible_items = collection.items.all()
+
+    query = request.GET.get('q', '').strip()
+    if query:
+        visible_items = visible_items.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        )
 
     return render(request, "collections/collection_detail.html", {
         "collection": collection,
-        "items": visible_items
+        "items": visible_items,
+        "query": query,  
     })
+
 
 @login_required
 def catalog_manager(request):
@@ -239,19 +324,25 @@ def search_items(request):
 
         if request.user.is_authenticated and request.user.is_librarian():
             item_results = Item.objects.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)  
             ).distinct()
+
         else:
             items_in_visible_collections = Item.objects.filter(
                 collections__in=visible_item_collections
             )
-            items_without_collections = Item.objects.filter(collections=None)
+            items_without_collections = Item.objects.filter(collections__isnull=True)
 
             visible_items = (items_in_visible_collections | items_without_collections).distinct()
 
             item_results = visible_items.filter(
-                Q(title__icontains=query) | Q(description__icontains=query)
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(tags__name__icontains=query)  
             ).distinct()
+
 
     return render(request, 'search/search_results.html', {
         'query': query,
@@ -259,37 +350,71 @@ def search_items(request):
         'collection_results': collection_results,
     })
 
-
 @login_required
 def create_item(request):
-    if not request.user.is_librarian():
-        messages.error(request, "Only librarians can add new items.")
-        return redirect('dashboard')
-
-    if request.method == 'POST':
-        form = ItemForm(request.POST, request.FILES)
+    if request.method == "POST":
+        form = ItemForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
-            item = form.save()  # Save the new item to the database
+            item = form.save(commit=False)
+            item.identifier = str(uuid.uuid4())
+            item.save()
+
+            tag_string = form.cleaned_data.get('tags', '')
+            tag_names = [name.strip() for name in tag_string.split(',') if name.strip()]
+            tags = [Tag.objects.get_or_create(name=name)[0] for name in tag_names]
+            item.tags.set(tags)
+            item.collections.set(form.cleaned_data.get('collections', []))
+
             messages.success(request, "Item created successfully!")
-            # Redirect to a detail page or list page for the item
             return redirect('item_detail', identifier=item.identifier)
     else:
-        form = ItemForm()
+        form = ItemForm(user=request.user)
 
-    return render(request, 'collections/create_item.html', {'form': form})
+    collection_field = form.fields['collections']
+    collection_objects = collection_field.queryset
+    collection_widgets = form['collections']
+    collection_pairs = zip(collection_objects, collection_widgets)
+
+    return render(request, 'collections/create_item.html', {
+        'form': form,
+        'collection_pairs': collection_pairs,
+    })
 
 @login_required
 def edit_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
-    if request.method == "POST":
-        form = ItemForm(request.POST, request.FILES, instance=item)
+
+    if request.method == 'POST':
+        form = ItemForm(request.POST, request.FILES, instance=item, user=request.user)
         if form.is_valid():
-            form.save()
+            item = form.save()
+            item.collections.clear()
+            selected_collections = form.cleaned_data.get('collections')
+            for collection in selected_collections:
+                collection.items.add(item)
+
             messages.success(request, "Item updated successfully.")
             return redirect("catalog_manager")
     else:
-        form = ItemForm(instance=item)
-    return render(request, "collections/edit_item.html", {"form": form, "item": item})
+        form = ItemForm(instance=item, user=request.user)
+
+    all_collections = form.fields['collections'].queryset
+    selected_collection_ids = set(item.collections.values_list('id', flat=True))
+    collection_pairs = [
+        {
+            "collection": collection,
+            "id": f"id_collections_{i}",
+            "value": collection.pk,
+            "selected": collection.pk in selected_collection_ids
+        }
+        for i, collection in enumerate(all_collections)
+    ]
+
+    return render(request, "collections/edit_item.html", {
+        "form": form,
+        "item": item,
+        "collection_pairs": collection_pairs,
+    })
 
 @login_required
 def delete_item(request, item_id):
@@ -307,6 +432,7 @@ def create_collection(request):
         if form.is_valid():
             collection = form.save(commit=False)
             collection.identifier = str(uuid.uuid4())
+            collection.creator = request.user
 
             if not request.user.is_librarian():
                 collection.is_public = True
@@ -314,7 +440,7 @@ def create_collection(request):
             collection.save()
             form.save_m2m()
             messages.success(request, "Collection created successfully!")
-            return redirect('collection_detail', collection_title=collection.title)
+            return redirect('collection_detail',slug=collection.slug)
     else:
         form = CollectionForm(user=request.user)
 
@@ -341,7 +467,7 @@ def edit_collection(request, identifier):
             updated_collection.save()
             form.save_m2m()
             messages.success(request, "Collection updated successfully!")
-            return redirect('collection_detail', collection_title=updated_collection.title)
+            return redirect('collection_detail', slug=updated_collection.slug)
     else:
         form = CollectionForm(user=request.user, instance=collection)
 
@@ -467,7 +593,7 @@ def borrow_request(request):
             messages.warning(request, "You have already requested or are currently borrowing this item.")
             return redirect('item_detail', identifier=item.identifier)
 
-        BorrowRequest.objects.create(user=request.user, item=item)
+        BorrowRequest.objects.create(user=request.user, item=item, status='requested')
         return render(request, "rentservice/borrow_request_success.html")
 
     return redirect("dashboard")
@@ -504,7 +630,7 @@ def view_borrow_requests(request):
         borrow_request.save()
         return redirect("view_borrow_requests")
 
-    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-timestamp")
+    requests = BorrowRequest.objects.select_related("user", "item").filter(status="requested").order_by("-request_date")
     return render(request, "base/view_request.html", {"requests": requests})
 
 @login_required
@@ -575,6 +701,7 @@ def return_item(request, request_id):
     borrow_request.item.mark_as_being_inspected()
     borrow_request.item.save()
     borrow_request.save()
+    messages.success(request, "Item returned successfully!")
     return redirect('my_items')
 
 @login_required
@@ -651,24 +778,36 @@ def mark_item_available(request, item_id):
 def request_access(request, collection_id):
     collection = get_object_or_404(Collection, id=collection_id)
 
-    already_requested = CollectionAccessRequest.objects.filter(
-        user=request.user,
-        collection=collection,
-        status='pending'
-    ).exists()
     already_approved = collection.private_users.filter(id=request.user.id).exists()
+    existing_request = CollectionAccessRequest.objects.filter(user=request.user, collection=collection).first()
 
-    if not already_requested and not already_approved:
+    if already_approved:
+        messages.info(request, "You already have access to this collection.")
+
+    elif existing_request:
+        if existing_request.status == "pending":
+            messages.info(request, "You already have a pending access request.")
+        elif existing_request.status == "approved":
+            messages.info(request, "Access already approved.")
+        elif existing_request.status == "denied":
+            existing_request.delete()
+            CollectionAccessRequest.objects.create(
+                user=request.user,
+                collection=collection,
+                status="pending"
+            )
+            messages.success(request, "Your access request has been resubmitted.")
+            
+    else:
         CollectionAccessRequest.objects.create(
             user=request.user,
             collection=collection,
-            status='pending'
+            status="pending"
         )
         messages.success(request, "Access request submitted.")
-    else:
-        messages.info(request, "You have already requested or received access.")
 
-    return redirect("dashboard")
+    return redirect("collection_detail", slug=collection.slug)
+
 
 @login_required
 def access_requests(request):

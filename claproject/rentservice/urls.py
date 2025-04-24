@@ -18,7 +18,7 @@ urlpatterns = [
 
     # Search & Result
     path('search/', views.search_items, name='search_items'),
-    path('collection/<str:collection_title>/', views.collection_detail, name='collection_detail'),
+    path('collection/<slug:slug>/', views.collection_detail, name='collection_detail'),
     path('item/<str:identifier>/', views.item_detail, name='item_detail'),
 
     # Temporary
@@ -26,7 +26,6 @@ urlpatterns = [
 
     # Menu
     path('profile/', views.profile, name='profile'),
-    path('settings/', views.setting, name='setting'),
     path('my-items/', views.my_items, name='my_items'),
     path("quality-assurance/", views.quality_assurance, name="quality_assurance"),
     path('access-requests/', views.access_requests, name='access_requests'),
@@ -48,6 +47,7 @@ urlpatterns = [
     path('collections/create/', views.create_collection, name='create_collection'),
     path('collections/<str:identifier>/edit/', views.edit_collection, name='edit_collection'),
     path('collections/<str:identifier>/delete/', views.delete_collection, name='delete_collection'),
+    path('api/available-items/', views.get_available_items, name='get_available_items'),
 
     # Borrow Request
     path("borrow/", views.borrow_request, name="borrow_request"),
@@ -57,7 +57,13 @@ urlpatterns = [
     path('upgrade-user/<int:user_id>/', views.upgrade_user, name='upgrade_user'),
 
     # Notification
-    path("notifications/", views.notifications, name="notifications")
+    path("notifications/", views.notifications, name="notifications"),
+
+    # Comment & Rating
+    path('comment/<int:comment_id>/edit/', views.edit_comment, name='edit_comment'),
+    path('comment/<int:comment_id>/delete/', views.delete_review, name='delete_comment'),
+
+
 
 
 ]

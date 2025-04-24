@@ -65,11 +65,10 @@
                         {% else %}
                             <i class="bi bi-person-circle me-2" style="font-size: 1.5rem;"></i>
                         {% endif %}
-                        <strong>{{ request.user.first_name }}</strong>
+                        <strong>{{ request.user.profile.visible_name|default:request.user.first_name }}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'setting' %}">Settings</a></li>
                         <li><a class="dropdown-item" href="{% url 'my_items' %}">My Items</a></li>
                         {% if request.user.role == "librarian" %}
                             <li><a class="dropdown-item" href="{% url 'access_requests' %}">Access Requests</a></li>
@@ -89,17 +88,29 @@
 </nav>
 <!-- END NAVBAR -->
 
-<!-- Messages Display -->
-<div class="container mt-3">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      {% endfor %}
-    {% endif %}
-</div>
+<!--&lt;!&ndash; Messages Display &ndash;&gt;-->
+<!--<div class="container mt-3">-->
+<!--    {% if messages %}-->
+<!--      {% for message in messages %}-->
+<!--        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">-->
+<!--          {{ message }}-->
+<!--          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>-->
+<!--        </div>-->
+<!--      {% endfor %}-->
+<!--    {% endif %}-->
+<!--</div>-->
+
+{% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 
 <!-- MAIN CONTENT -->
 <div class="container my-5">
@@ -109,7 +120,7 @@
 
 <!-- FOOTER -->
 <footer class="bg-primary text-white text-center py-3 mt-5">
-    &copy; 2025 Lending & Renting App. All rights reserved.
+    &copy; 2025 Lending & Renting App. This system is a class project, the system is not monitored, and no real information should be submitted.
 </footer>
 
 <!-- Bootstrap JS -->

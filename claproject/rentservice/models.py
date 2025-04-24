@@ -6,12 +6,15 @@ from datetime import timedelta
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.utils.text import slugify
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from typing import List
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.utils.text import slugify
+
     
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -31,10 +34,16 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    visible_name = models.CharField(max_length=100, blank=True, default='')
 
 class DjangoAdministrator(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
 
 class Item(models.Model):
     title = models.CharField(max_length=255)
@@ -54,16 +63,17 @@ class Item(models.Model):
         ('in_circulation', 'In Circulation'),
         ('being_repaired', 'Being Repaired'),
     ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_stock')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
     location = models.CharField(max_length=255)
     description = models.TextField()
     image = models.ImageField(upload_to='items/', null=True, blank=True)
     rating = models.FloatField(default=0.0, validators=[MinValueValidator(1), MaxValueValidator(5)])
     borrow_period_days = models.PositiveIntegerField(default=30)
 
-    collections = models.ManyToManyField('Collection', blank=True)
     deleted = models.BooleanField(default=False)
     condition = models.IntegerField(default=10, validators=[MinValueValidator(1), MaxValueValidator(10)])
+
+    tags = models.ManyToManyField(Tag, blank=True)
 
     def mark_as_available(self):
         self.status = 'available'
@@ -89,7 +99,6 @@ class Item(models.Model):
     def __str__(self):
         return self.title
 
-
 class Comment(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -103,9 +112,10 @@ class Rating(models.Model):
 
 class Collection(models.Model):
     title = models.CharField(max_length=255)
+    slug = models.SlugField(blank=True, null=True, unique=True)
     identifier = models.CharField(max_length=255, unique=True)
     description = models.TextField()
-    items = models.ManyToManyField(Item, blank=True)
+    items = models.ManyToManyField(Item, blank=True, related_name='collections')
     is_public = models.BooleanField(default=True)
     creator = models.ForeignKey(
         User,
@@ -114,11 +124,26 @@ class Collection(models.Model):
         null=True, 
         blank=True
     )
-    
     private_users = models.ManyToManyField(User, blank=True, related_name='private_collections')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+            while Collection.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
 
 class Library(models.Model):
@@ -126,28 +151,36 @@ class Library(models.Model):
     collections = models.ManyToManyField(Collection, blank=True)
     items = models.ManyToManyField(Item, blank=True)
 
-
 class BorrowRequest(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
+        ('requested', 'Requested'),
         ('approved', 'Approved'),
         ('denied', 'Denied'),
         ('returned', 'Returned'),
     ]
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
     request_date = models.DateTimeField(auto_now_add=True)
     approved_date = models.DateTimeField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     return_date = models.DateField(null=True, blank=True)
+
+    borrowed_condition = models.IntegerField(null=True, blank=True)
+    returned_condition = models.IntegerField(null=True, blank=True)
+    borrowed_at = models.DateTimeField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
+    is_complete = models.BooleanField(default=False)
 
     def approve(self):
         if self.status == 'pending' and self.item.status == 'available':
             self.status = 'approved'
             self.approved_date = timezone.now()
             self.due_date = timezone.now().date() + timedelta(days=self.item.borrow_period_days)
+            self.borrowed_at = timezone.now()
             self.item.status = 'in_circulation'
             self.item.save()
             self.save()
@@ -157,33 +190,15 @@ class BorrowRequest(models.Model):
             self.status = 'denied'
             self.save()
 
-    def return_item(self): #May have to separate the return to other request
+    def return_item(self):
         if self.status == 'approved':
             self.status = 'returned'
+            self.returned_at = timezone.now()
             self.return_date = timezone.now().date()
             self.item.status = 'being_inspected'
             self.item.save()
+            self.is_complete = True
             self.save()
-
-class BorrowRequest(models.Model):
-    STATUS_CHOICES = [
-        ('requested', 'Requested'),
-        ('approved', 'Approved'),
-        ('declined', 'Declined'),
-        ('returned', 'Returned'),
-    ]
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
-    timestamp = models.DateTimeField(auto_now_add=True) # When the request was first made
-
-    borrowed_condition = models.IntegerField(null=True, blank=True)
-    returned_condition = models.IntegerField(null=True, blank=True)
-    borrowed_at = models.DateTimeField(null=True, blank=True)
-    returned_at = models.DateTimeField(null=True, blank=True)
-
-    is_complete = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} requests {self.item.name}"
@@ -211,3 +226,8 @@ class Notification(models.Model):
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+
+

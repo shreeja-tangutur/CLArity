@@ -9,11 +9,10 @@
     {% for collection in collections %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
-                <img src="https://via.placeholder.com/400x250?text={{ collection.title|urlencode }}" class="card-img-top" alt="{{ collection.title }}">
                 <div class="card-body">
                     <h5 class="card-title">{{ collection.title }}</h5>
                     <p class="card-text">{{ collection.description|default:"No description available." }}</p>
-                    <a href="{% url 'collection_detail' collection_title=collection.title|urlencode %}" class="btn btn-primary">
+                    <a href="{% url 'collection_detail' slug=collection.slug|urlencode %}" class="btn btn-primary">
                         View {{ collection.title }}
                     </a>
                 </div>

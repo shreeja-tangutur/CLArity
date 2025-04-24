@@ -1,12 +1,108 @@
-{% extends "base/base.html" %}
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Edit Item{% endblock title %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Edit Item: {{ item.title }}</h2>
-    <form method="post" enctype="multipart/form-data">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+
+<div class="container mt-5">
+    <h1>Edit Item: {{ item.title }}</h1>
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        <div class="mb-3">
+            {{ form.title.label_tag }} {{ form.title }}
+        </div>
+        <div class="mb-3">
+            {{ form.status.label_tag }} {{ form.status }}
+        </div>
+        <div class="mb-3">
+            {{ form.location.label_tag }} {{ form.location }}
+        </div>
+        <div class="mb-3">
+            {{ form.description.label_tag }} {{ form.description }}
+        </div>
+        <div class="mb-3">
+            {{ form.image.label_tag }} {{ form.image }}
+        </div>
+        <div class="mb-3">
+            {{ form.borrow_period_days.label_tag }} {{ form.borrow_period_days }}
+        </div>
+
+        <div class="mb-3">
+            <label for="tag-input"><strong>Tags:</strong></label>
+            {{ form.tags }}
+        </div>
+
+        <div class="mb-3">
+            <label><strong>Available Collections:</strong></label>
+            <div id="collection-checkboxes">
+                {% for pair in collection_pairs %}
+                    <div class="form-check mb-1">
+                        <input
+                            class="form-check-input collection-checkbox"
+                            type="checkbox"
+                            name="collections"
+                            id="{{ pair.id }}"
+                            value="{{ pair.value }}"
+                            data-private="{{ pair.collection.is_public|yesno:'false,true'|lower }}"
+                            {% if pair.selected %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="{{ pair.id }}">
+                            {{ pair.collection.title }}
+                            {% if not pair.collection.is_public %}
+                                <span class="badge bg-warning text-dark ms-1">Private</span>
+                            {% endif %}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-success">Save Changes</button>
         <a href="{% url 'catalog_manager' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
-{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tagInput = document.querySelector('#tag-input');
+        if (tagInput) new Tagify(tagInput);
+
+        const checkboxes = document.querySelectorAll('.collection-checkbox');
+
+        function updateCheckboxStates() {
+            let privateSelected = false;
+            let publicSelected = false;
+
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    if (cb.dataset.private === 'true') privateSelected = true;
+                    else publicSelected = true;
+                }
+            });
+
+            checkboxes.forEach(cb => {
+                const isPrivate = cb.dataset.private === 'true';
+
+                if (privateSelected) {
+                    cb.disabled = !cb.checked;
+                } else if (publicSelected && isPrivate) {
+                    cb.disabled = true;
+                } else {
+                    cb.disabled = false;
+                }
+            });
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateCheckboxStates);
+        });
+
+        updateCheckboxStates();
+    });
+</script>
+
+{% endblock content %}

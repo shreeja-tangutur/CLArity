@@ -15,7 +15,7 @@
         <tr>
             <td>{{ request.user.username }}</td>
             <td>{{ request.item.title }}</td>
-            <td>{{ request.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ request.request_date|date:"Y-m-d H:i" }}</td>
             <td>
                 <form method="post" class="d-inline">
                     {% csrf_token %}

@@ -1,7 +1,8 @@
 from django import forms
 from .models import BorrowRequest
-from .models import Item, Collection
+from .models import Item, Collection, Tag, User
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 class RatingCommentForm(forms.Form):
@@ -12,38 +13,57 @@ class RatingCommentForm(forms.Form):
     )
     text = forms.CharField(
         label='Leave a Comment',
+        required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         max_length=500
     )
 
 class ItemForm(forms.ModelForm):
-    collection = forms.ModelChoiceField(
-        queryset=Collection.objects.all(),
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
         required=False,
-        empty_label="No collection",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'})
+    )
+    
+
+    collections = forms.ModelMultipleChoiceField(
+        queryset=Collection.objects.none(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'})
     )
 
     class Meta:
         model = Item
         fields = [
             'title',
-            'identifier',
             'status',
             'location',
             'description',
             'image',
             'borrow_period_days',
+            'tags'
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'identifier': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'location': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'borrow_period_days': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        self.user = user
+        super().__init__(*args, **kwargs)
+        if self.user:
+            if self.user.role == 'librarian':
+                self.fields['collections'].queryset = Collection.objects.all()
+            else:
+                self.fields['collections'].queryset = Collection.objects.filter(is_public=True)
+        if self.instance.pk:
+            self.fields['collections'].initial = self.instance.collections.all()
+
 
 class CollectionForm(forms.ModelForm):
     items = forms.ModelMultipleChoiceField(
@@ -59,7 +79,28 @@ class CollectionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        # If the user is not a librarian, they can only create public collections.
+
+        current_collection = self.instance if self.instance and self.instance.pk else None
+        is_edit_mode = current_collection is not None
+
+        if is_edit_mode:
+            if current_collection.is_public:
+                private_item_ids = Item.objects.filter(
+                    collections__is_public=False
+                ).exclude(
+                    collections=current_collection
+                ).values_list('id', flat=True)
+
+                self.fields['items'].queryset = Item.objects.exclude(
+                    id__in=private_item_ids
+                ).distinct()
+            else:
+                self.fields['items'].queryset = Item.objects.filter(
+                    Q(collections__isnull=True) | Q(collections=current_collection)
+                ).distinct()
+        else:
+            self.fields['items'].queryset = Item.objects.all()
+
         if self.user and not self.user.is_librarian():
             self.fields['is_public'].widget = forms.HiddenInput()
             self.fields['is_public'].initial = True
