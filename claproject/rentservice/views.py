@@ -110,11 +110,9 @@ def dashboard(request):
 
     data = get_visible_data_for_user(request.user)
     collections = data['collections']
-
-    public_collections = collections.filter(is_public=True)
-    private_collections = collections.filter(is_public=False)
-
-    items = Item.objects.all()
+    public_collections = data['public_collections']
+    private_collections = data['private_collections']
+    items = data['items']
 
     # sort by alphabetial
     sort = request.GET.get('sort')
@@ -135,6 +133,7 @@ def dashboard(request):
         'profile': profile,
         'items': items,
         'tags': tags,
+        'collections': collections,
         'public_collections': public_collections,
         'private_collections': private_collections,
         'patrons': patrons,
@@ -151,6 +150,7 @@ def get_visible_data_for_user(user):
             Q(collections__isnull=True) |
             Q(collections__in=public_collections)
         ).distinct()
+        private_collections = Collection.objects.none()
 
     elif user.role == 'patron':
         private_collections_shared = Collection.objects.filter(is_public=False, private_users=user)
@@ -161,13 +161,17 @@ def get_visible_data_for_user(user):
             Q(collections__in=public_collections) |
             Q(collections__in=private_collections_shared)
         ).distinct()
+        private_collections = Collection.objects.filter(is_public=False)
 
     elif user.role == 'librarian':
         visible_collections = Collection.objects.all()
+        private_collections = Collection.objects.filter(is_public=False)
         visible_items = Item.objects.all()
 
     return {
         "collections": visible_collections,
+        "public_collections": public_collections,
+        "private_collections": private_collections,
         "items": visible_items
     }
 
