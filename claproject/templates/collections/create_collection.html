@@ -18,10 +18,12 @@
             {{ form.description }}
         </div>
 
-        <div class="form-group mb-3">
-            {{ form.is_public.label_tag }}
-            {{ form.is_public }}
-        </div>
+        {% if is_librarian %}
+            <div class="form-group mb-3">
+                {{ form.is_public.label_tag }}
+                {{ form.is_public }}
+            </div>
+        {% endif %}
 
         <div class="form-group mb-3">
             <label for="id_items">Select Items to Include:</label>

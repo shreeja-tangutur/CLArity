@@ -109,17 +109,17 @@ def dashboard(request):
         user_type = "anonymous"
 
     data = get_visible_data_for_user(request.user)
+    collections = data['collections']
 
-    if request.user.is_authenticated and request.user.role == 'patron':
-        collections = Collection.objects.all()  # Include private
-    else:
-        collections = data['collections']
+    public_collections = collections.filter(is_public=True)
+    private_collections = collections.filter(is_public=False)
 
     return render(request, 'dashboard/dashboard.html', {
         'user_type': user_type,
         'profile': profile,
         'items': data['items'],
-        'collections': collections,
+        'public_collections': public_collections,
+        'private_collections': private_collections,
         'patrons': patrons,
         "has_unread": has_unread_notifications(request.user),
     })
@@ -429,6 +429,8 @@ def delete_item(request, item_id):
 
 @login_required
 def create_collection(request):
+    is_librarian = request.user.is_librarian()
+
     if request.method == 'POST':
         form = CollectionForm(request.POST, user=request.user)
         if form.is_valid():
@@ -436,7 +438,7 @@ def create_collection(request):
             collection.identifier = str(uuid.uuid4())
             collection.creator = request.user
 
-            if not request.user.is_librarian():
+            if not is_librarian:
                 collection.is_public = True
 
             collection.save()
@@ -446,7 +448,9 @@ def create_collection(request):
     else:
         form = CollectionForm(user=request.user)
 
-    return render(request, 'collections/create_collection.html', {'form': form})
+    return render(request, 'collections/create_collection.html', {'form': form, 'is_librarian': is_librarian})
+
+
 
 
 @login_required

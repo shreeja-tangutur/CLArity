@@ -6,38 +6,59 @@
 </div>
 
 <div class="row">
-    {% for collection in collections %}
+    <div class="text-center mb-4">
+        <a href="{% url 'create_collection' %}" class="btn btn-primary">
+            Create Collection
+        </a>
+    </div>
+    <div class="text-center">
+        <h3>Public Collections</h3>
+    </div>
+    {% for collection in public_collections %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-body">
                     <h5 class="card-title">{{ collection.title }}</h5>
                     <p class="card-text">{{ collection.description|default:"No description available." }}</p>
-                    {% if not collection.is_public and request.user not in collection.private_users.all %}
+                    <a href="{% url 'collection_detail' slug=collection.slug %}" class="btn btn-outline-primary">
+                        View {{ collection.title }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-muted text-center">No collections to display.</p>
+    {% endfor %}
+
+    <div class="text-center">
+        <h3>Private Collections</h3>
+    </div>
+    {% for collection in private_collections %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ collection.title }}</h5>
+                    <p class="card-text">{{ collection.description|default:"No description available." }}</p>
+                    {% if request.user in collection.private_users.all %}
+                        <a href="{% url 'collection_detail' slug=collection.slug %}" class="btn btn-outline-primary">
+                            View {{ collection.title }}
+                        </a>
+                    {% else %}
                         <form method="post" action="{% url 'request_access' collection.id %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-outline-warning">Request Access</button>
                         </form>
-                    {% else %}
-                        <a href="{% url 'collection_detail' slug=collection.slug %}" class="btn btn-outline-primary">
-                            View {{ collection.title }}
-                        </a>
                     {% endif %}
                 </div>
             </div>
         </div>
     {% empty %}
-        <p class="text-muted">No collections to display.</p>
+        <p class="text-muted text-center">No collections to display.</p>
     {% endfor %}
 </div>
 
 <div class="text-center mt-5">
-    <h2>Or browse individual items</h2>
-</div>
-
-<div class="text-center mb-4">
-    <a href="{% url 'create_collection' %}" class="btn btn-primary">
-        Create Collection
-    </a>
+    <h1>Browse individual items</h1>
 </div>
 
 <div class="row">
@@ -45,19 +66,27 @@
         <div class="col-md-3 mb-4">
             <div class="card h-100">
                 {% if item.image %}
-                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.title }}">
+                    <img src="{{ item.image.url }}" class="card-img-top img-fixed" alt="{{ item.title }}">
                 {% else %}
-                    <img src="https://via.placeholder.com/300x200?text=Item" class="card-img-top" alt="{{ item.title }}">
+                    <img src="https://via.placeholder.com/300x200?text=Item" class="card-img-top img-fixed" alt="{{ item.title }}">
                 {% endif %}
-                <div class="card-body">
+                <div class="card-body d-flex flex-column">
                     <h5 class="card-title">{{ item.title }}</h5>
                     <p class="card-text">{{ item.description|truncatewords:15 }}</p>
-                    <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary">View Item</a>
+                    <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary mt-auto">View Item</a>
                 </div>
             </div>
         </div>
     {% empty %}
-        <p class="text-muted">No items available to show.</p>
+        <p class="text-muted text-center">No items available to show.</p>
     {% endfor %}
 </div>
 {% endblock content %}
+
+<style>
+    .img-fixed {
+        height: 200px;
+        object-fit: contain;
+        background-color: #f8f9fa;
+    }
+</style>
