@@ -26,6 +26,27 @@
             <button type="submit" class="btn btn-primary">Search</button>
         </div>
     </form>
+
+    <form method="get" class="d-flex mb-4">
+        <select name="sort" class="form-select me-2" onchange="this.form.submit()">
+            <option value="">Sort By</option>
+            <option value="title_asc" {% if request.GET.sort == 'title_asc' %}selected{% endif %}>Title (A–Z)</option>
+            <option value="title_desc" {% if request.GET.sort == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
+        </select>
+    
+        <select name="tag" class="form-select me-2" onchange="this.form.submit()">
+            <option value="">Filter By Tag</option>
+            {% for tag in tags %}
+                <option value="{{ tag.id }}" {% if request.GET.tag == tag.id|stringformat:"s" %}selected{% endif %}>
+                    {{ tag.name }}
+                </option>
+            {% endfor %}
+        </select>
+    
+        {% if request.GET %}
+        <a href="{% url 'collection_detail' slug=collection.slug %}" class="btn btn-secondary">Clear Filters</a>
+        {% endif %}
+    </form>
   
     <h2 class="text-center mb-4">Items in this Collection</h2>
 

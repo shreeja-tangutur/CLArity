@@ -61,6 +61,27 @@
     <h1>Browse individual items</h1>
 </div>
 
+<form method="get" class="d-flex mb-4">
+    <select name="sort" class="form-select me-2" onchange="this.form.submit()">
+        <option value="">Sort By</option>
+        <option value="title_asc" {% if request.GET.sort == 'title_asc' %}selected{% endif %}>Title (A–Z)</option>
+        <option value="title_desc" {% if request.GET.sort == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
+    </select>
+
+    <select name="tag" class="form-select me-2" onchange="this.form.submit()">
+        <option value="">Filter By Tag</option>
+        {% for tag in tags %}
+            <option value="{{ tag.id }}" {% if request.GET.tag == tag.id|stringformat:"s" %}selected{% endif %}>
+                {{ tag.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    {% if request.GET %}
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Clear Filters</a>
+    {% endif %}
+</form>
+
 <div class="row">
     {% for item in items %}
         <div class="col-md-3 mb-4">

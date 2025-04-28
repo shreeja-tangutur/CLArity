@@ -114,10 +114,27 @@ def dashboard(request):
     public_collections = collections.filter(is_public=True)
     private_collections = collections.filter(is_public=False)
 
+    items = Item.objects.all()
+
+    # sort by alphabetial
+    sort = request.GET.get('sort')
+    if sort == 'title_asc':
+        items = items.order_by('title')
+    elif sort == 'title_desc':
+        items = items.order_by('-title')
+
+    # filter by tags
+    tag_id = request.GET.get('tag')
+    if tag_id:
+        items = items.filter(tags__id=tag_id)
+
+    tags = Tag.objects.all()
+
     return render(request, 'dashboard/dashboard.html', {
         'user_type': user_type,
         'profile': profile,
-        'items': data['items'],
+        'items': items,
+        'tags': tags,
         'public_collections': public_collections,
         'private_collections': private_collections,
         'patrons': patrons,
@@ -273,6 +290,20 @@ def collection_detail(request, slug):
 
     visible_items = collection.items.all()
 
+    # sort by alphabetial
+    sort = request.GET.get('sort')
+    if sort == 'title_asc':
+        visible_items = visible_items.order_by('title')
+    elif sort == 'title_desc':
+        visible_items = visible_items.order_by('-title')
+
+    # filter by tags
+    tag_id = request.GET.get('tag')
+    if tag_id:
+        visible_items = visible_items.filter(tags__id=tag_id)
+
+    tags = Tag.objects.all()
+
     query = request.GET.get('q', '').strip()
     if query:
         visible_items = visible_items.filter(
@@ -282,6 +313,7 @@ def collection_detail(request, slug):
     return render(request, "collections/collection_detail.html", {
         "collection": collection,
         "items": visible_items,
+        "tags": tags,
         "query": query,  
     })
 
