@@ -328,7 +328,7 @@ def search_items(request):
             item_results = Item.objects.filter(
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
-                Q(tags__name__icontains=query)  
+                Q(tags__name__iexact=query)  
             ).distinct()
 
         else:
@@ -342,7 +342,7 @@ def search_items(request):
             item_results = visible_items.filter(
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
-                Q(tags__name__icontains=query)  
+                Q(tags__name__iexact=query)  
             ).distinct()
 
 

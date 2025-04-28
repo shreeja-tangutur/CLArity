@@ -44,6 +44,13 @@
         <p><strong>Condition:</strong> {{ item.condition }} / 10</p>
         <p><strong>Location:</strong> {{ item.location }}</p>
         <p><strong>Borrow Period:</strong> {{ item.borrow_period_days }} days</p>
+        {% if item.tags.exists %}
+            <p><strong>Tags:</strong>
+                {% for tag in item.tags.all %}
+                    <span class="badge rounded-pill bg-primary me-1">{{ tag.name }}</span>
+                {% endfor %}
+            </p>
+        {% endif %}
 
         {% if request.user.is_authenticated %}
           {% if item.status == "available" %}
