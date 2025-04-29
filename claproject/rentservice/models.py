@@ -209,7 +209,7 @@ class BorrowRequest(models.Model):
             self.save()
 
     def __str__(self):
-        return f"{self.user.username} requests {self.item.name}"
+        return f"{self.user.username} requests {self.item.title}"
 
 class CollectionAccessRequest(models.Model):
     STATUS_CHOICES = [

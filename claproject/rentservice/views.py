@@ -336,8 +336,9 @@ def collection_detail(request, slug):
     query = request.GET.get('q', '').strip()
     if query:
         visible_items = visible_items.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
-        )
+            Q(title__icontains=query) |
+            Q(tags__name__iexact=query)  
+        ).distinct()
 
     return render(request, "collections/collection_detail.html", {
         "collection": collection,
@@ -361,8 +362,6 @@ def catalog_manager(request):
 
 @csrf_exempt
 def search_items(request):
-    from django.db.models import Q
-
     query = request.GET.get('q', '').strip()
     item_results = []
     collection_results = []
@@ -381,17 +380,15 @@ def search_items(request):
 
     if query:
         collection_results = visible_collections.filter(
-            Q(title__icontains=query) | Q(description__icontains=query)
+            Q(title__icontains=query)
         ).distinct()
 
 
         if request.user.is_authenticated and request.user.is_librarian():
             item_results = Item.objects.filter(
                 Q(title__icontains=query) |
-                Q(description__icontains=query) |
                 Q(tags__name__iexact=query)  
             ).distinct()
-
         else:
             items_in_visible_collections = Item.objects.filter(
                 collections__in=visible_item_collections
@@ -402,7 +399,6 @@ def search_items(request):
 
             item_results = visible_items.filter(
                 Q(title__icontains=query) |
-                Q(description__icontains=query) |
                 Q(tags__name__iexact=query)  
             ).distinct()
 
@@ -422,10 +418,7 @@ def create_item(request):
             item.identifier = str(uuid.uuid4())
             item.save()
 
-            tag_string = form.cleaned_data.get('tags', '')
-            tag_names = [name.strip() for name in tag_string.split(',') if name.strip()]
-            tags = [Tag.objects.get_or_create(name=name)[0] for name in tag_names]
-            item.tags.set(tags)
+            item.tags.set(form.cleaned_data.get('tags'))
             item.collections.set(form.cleaned_data.get('collections', []))
 
             messages.success(request, "Item created successfully!")
