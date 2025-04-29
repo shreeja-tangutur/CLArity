@@ -9,6 +9,17 @@
     <div class="text-center">
         <h3>Public Collections</h3>
     </div>
+    <form method="get" class="d-flex mb-4">
+        <select name="sort_public_collections" class="form-select me-2" onchange="this.form.submit()">
+            <option value="">Sort By</option>
+            <option value="title_asc" {% if request.GET.sort_public_collections == 'title_asc' %}selected{% endif %}>Title (A–Z)</option>
+            <option value="title_desc" {% if request.GET.sort_public_collections == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
+        </select>
+    
+        {% if request.GET %}
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Clear Filters</a>
+        {% endif %}
+    </form>
     {% for collection in public_collections %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">
@@ -28,6 +39,17 @@
     <div class="text-center">
         <h3>Private Collections</h3>
     </div>
+    <form method="get" class="d-flex mb-4">
+        <select name="sort_private_collections" class="form-select me-2" onchange="this.form.submit()">
+            <option value="">Sort By</option>
+            <option value="title_asc" {% if request.GET.sort_private_collections == 'title_asc' %}selected{% endif %}>Title (A–Z)</option>
+            <option value="title_desc" {% if request.GET.sort_private_collections == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
+        </select>
+    
+        {% if request.GET %}
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Clear Filters</a>
+        {% endif %}
+    </form>
     {% for collection in private_collections %}
         <div class="col-md-4 mb-4">
             <div class="card h-100">

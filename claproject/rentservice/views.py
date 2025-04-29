@@ -109,22 +109,45 @@ def dashboard(request):
         user_type = "anonymous"
 
     data = get_visible_data_for_user(request.user)
-    collections = data['collections']
     public_collections = data['public_collections']
     private_collections = data['private_collections']
     items = data['items']
 
-    # sort by alphabetial
+    # sort by alphabetial items
     sort = request.GET.get('sort')
     if sort == 'title_asc':
         items = items.order_by('title')
     elif sort == 'title_desc':
         items = items.order_by('-title')
 
-    # filter by tags
+    # filter by tags items 
     tag_id = request.GET.get('tag')
     if tag_id:
         items = items.filter(tags__id=tag_id)
+
+    # sort by alphabetial public collections
+    sort_public_collections = request.GET.get('sort_public')
+    if sort_public_collections == 'title_asc':
+        public_collections = public_collections.order_by('title')
+    elif sort_public_collections == 'title_desc':
+        public_collections = public_collections.order_by('-title')
+
+    # sort by alphabetical private collections
+    sort_private_collections = request.GET.get('sort_private')
+    if sort_private_collections == 'title_asc':
+        private_collections = private_collections.order_by('title')
+    elif sort_private_collections == 'title_desc':
+        private_collections = private_collections.order_by('-title')
+
+    # filter by public collections created by the user
+    filter_public_collections = request.GET.get('filter_public')
+    if filter_public_collections == 'user_created':
+        public_collections = public_collections.filter(owner=request.user)
+
+    # filter private collections by access
+    filter_private_collections = request.GET.get('filter_private')
+    if filter_private_collections == 'access_granted':
+        private_collections = private_collections.filter(private_users=request.user)
 
     tags = Tag.objects.all()
 
@@ -133,7 +156,6 @@ def dashboard(request):
         'profile': profile,
         'items': items,
         'tags': tags,
-        'collections': collections,
         'public_collections': public_collections,
         'private_collections': private_collections,
         'patrons': patrons,
@@ -145,7 +167,6 @@ def get_visible_data_for_user(user):
     public_collections = Collection.objects.filter(is_public=True)
 
     if not user.is_authenticated:
-        visible_collections = public_collections
         visible_items = Item.objects.filter(
             Q(collections__isnull=True) |
             Q(collections__in=public_collections)
@@ -154,7 +175,6 @@ def get_visible_data_for_user(user):
 
     elif user.role == 'patron':
         private_collections_shared = Collection.objects.filter(is_public=False, private_users=user)
-        visible_collections = (public_collections | private_collections_shared).distinct()
 
         visible_items = Item.objects.filter(
             Q(collections__isnull=True) |
@@ -164,12 +184,10 @@ def get_visible_data_for_user(user):
         private_collections = Collection.objects.filter(is_public=False)
 
     elif user.role == 'librarian':
-        visible_collections = Collection.objects.all()
         private_collections = Collection.objects.filter(is_public=False)
         visible_items = Item.objects.all()
 
     return {
-        "collections": visible_collections,
         "public_collections": public_collections,
         "private_collections": private_collections,
         "items": visible_items
