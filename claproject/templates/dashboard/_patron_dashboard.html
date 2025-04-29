@@ -22,7 +22,7 @@
             <option value="title_desc" {% if request.GET.sort_public_collections == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
         </select>
     
-        <select name="filter_private" class="form-select me-2" onchange="this.form.submit()">
+        <select name="filter_public_collections" class="form-select me-2" onchange="this.form.submit()">
             <option value="">Filter By Creator</option>
             <option value="user_created" {% if request.GET.filter_public == 'user_created' %}selected{% endif %}>My Created Collections</option>
         </select>
@@ -59,7 +59,7 @@
             <option value="title_desc" {% if request.GET.sort_private_collections == 'title_desc' %}selected{% endif %}>Title (Z–A)</option>
         </select>
     
-        <select name="filter_private" class="form-select me-2" onchange="this.form.submit()">
+        <select name="filter_private_collections" class="form-select me-2" onchange="this.form.submit()">
             <option value="">Filter By Access</option>
             <option value="access_granted" {% if request.GET.filter_private == 'access_granted' %}selected{% endif %}>Collections with Access</option>
         </select>

@@ -108,10 +108,10 @@ class CollectionForm(forms.ModelForm):
     def clean(self):
         """
         Enforce:
-         - An item in a private collection cannot belong to any other collection.
-         - Items in public collections can belong to multiple public collections.
-         - If the current collection is public, check that none of the items selected is already in a private collection.
-         - If the current collection is private, check that none of the items is in any other collection.
+        - An item in a private collection cannot belong to any other collection.
+        - Items in public collections can belong to multiple public collections.
+        - If the current collection is public, check that none of the items selected is already in a private collection.
+        - If the current collection is private, check that none of the items is in any other collection.
         """
         cleaned_data = super().clean()
         items = cleaned_data.get('items')
@@ -126,7 +126,7 @@ class CollectionForm(forms.ModelForm):
                 for item in items:
                     # Exclude the current collection (in case of editing)
                     other_collections = item.collections.exclude(pk=current_pk)
-                    if other_collections.exists():
+                    if other_collections.exists() and any(not col.is_public for col in other_collections):
                         raise ValidationError(
                             f"Item '{item.title}' is already in another collection. "
                             "An item in a private collection cannot be added to another collection."

@@ -126,27 +126,27 @@ def dashboard(request):
     if tag_id:
         items = items.filter(tags__id=tag_id)
 
-    # sort by alphabetial public collections
-    sort_public_collections = request.GET.get('sort_public')
+    # sort by alphabetical public collections
+    sort_public_collections = request.GET.get('sort_public_collections')
     if sort_public_collections == 'title_asc':
         public_collections = public_collections.order_by('title')
     elif sort_public_collections == 'title_desc':
         public_collections = public_collections.order_by('-title')
 
     # sort by alphabetical private collections
-    sort_private_collections = request.GET.get('sort_private')
+    sort_private_collections = request.GET.get('sort_private_collections')
     if sort_private_collections == 'title_asc':
         private_collections = private_collections.order_by('title')
     elif sort_private_collections == 'title_desc':
         private_collections = private_collections.order_by('-title')
 
     # filter by public collections created by the user
-    filter_public_collections = request.GET.get('filter_public')
+    filter_public_collections = request.GET.get('filter_public_collections')
     if filter_public_collections == 'user_created':
-        public_collections = public_collections.filter(owner=request.user)
+        public_collections = public_collections.filter(creator=request.user)
 
     # filter private collections by access
-    filter_private_collections = request.GET.get('filter_private')
+    filter_private_collections = request.GET.get('filter_private_collections')
     if filter_private_collections == 'access_granted':
         private_collections = private_collections.filter(private_users=request.user)
 
@@ -506,6 +506,8 @@ def create_collection(request):
             form.save_m2m()
             messages.success(request, "Collection created successfully!")
             return redirect('collection_detail',slug=collection.slug)
+        else:
+            print(form.errors)
     else:
         form = CollectionForm(user=request.user)
 
