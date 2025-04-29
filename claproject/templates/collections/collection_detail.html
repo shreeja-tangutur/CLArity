@@ -70,7 +70,9 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                            <a href="{% url 'item_detail' identifier=item.identifier %}" class="btn btn-outline-primary mt-2">View Item</a>
+                            <a href="{% url 'item_detail' item.identifier %}?next={{ request.get_full_path }}" class="btn btn-outline-primary mt-2">
+                                View Item
+                            </a>
                         </div>
                     </div>
                 </div>

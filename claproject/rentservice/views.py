@@ -16,6 +16,7 @@ from .forms import CollectionForm, ItemForm, RatingCommentForm
 from .models import Item, Collection, BorrowRequest, CollectionAccessRequest
 from django.db.models import Avg, Q, Count
 from django.utils import timezone
+from django.urls import reverse
 
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login
@@ -215,9 +216,12 @@ def get_available_items(request):
         'items': [{'id': item.id, 'title': item.title} for item in items]
     })
 
-@login_required
 def item_detail(request, identifier):
     item = get_object_or_404(Item, identifier=identifier)
+
+    if not request.user.is_authenticated:
+        messages.info(request, "Please sign in to view this item.")
+        return redirect('login')
 
     ratings = item.ratings.all()
     avg_rating = round(ratings.aggregate(Avg('score'))['score__avg'] or 0, 1)
@@ -255,6 +259,8 @@ def item_detail(request, identifier):
     else:
         form = RatingCommentForm()
 
+    next_url = request.GET.get('next') or reverse('dashboard')
+
     return render(request, "collections/item_detail.html", {
         'item': item,
         'avg_rating': avg_rating,
@@ -262,6 +268,7 @@ def item_detail(request, identifier):
         'form': form,
         'existing_comment': existing_comment,
         'in_cart': in_cart,
+        'next_url': next_url,
     })
 
 
