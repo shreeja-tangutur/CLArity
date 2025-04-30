@@ -15,7 +15,53 @@
             object-fit: contain;
             background-color: #f8f9fa;
         }
-    </style>
+
+    /* Override primary color */
+    .btn-primary,
+    .bg-primary,
+    .text-primary {
+        background-color: #232D4B !important;
+        border-color: #232D4B !important;
+        color: white !important;
+    }
+    
+    .btn-primary:hover {
+        background-color: #1d2440 !important;
+        border-color: #1d2440 !important;
+    }
+    
+    /* Optional: Use orange for secondary elements */
+    .btn-secondary,
+    .bg-secondary,
+    .text-secondary {
+        background-color: #E57200 !important;
+        border-color: #E57200 !important;
+        color: white !important;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #cc6200 !important;
+        border-color: #cc6200 !important;
+    }
+    
+    /* Example header text */
+    h1, h2, h3 {
+        color: #232D4B;
+    }
+    
+    /* Link colors */
+    a {
+        color: #E57200;
+    }
+    a:hover {
+        color: #cc6200;
+    }
+    
+    /* Optional badge override */
+    .badge.bg-primary {
+        background-color: #232D4B !important;
+    }
+    </style>    
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
 
@@ -23,7 +69,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
         <!-- Brand -->
-        <a class="navbar-brand" href="{% url 'dashboard' %}">CLArity</a>
+        <a class="navbar-brand" href="{% url 'dashboard' %}"><strong>CLArity</strong> | The UVA Rental App</a>
 
         <!-- Search Form -->
         <div class="d-flex justify-content-center w-100">
@@ -153,6 +199,4 @@
 
 </body>
 </html>
-
-
 
